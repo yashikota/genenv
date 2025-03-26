@@ -12,7 +12,7 @@ import (
 
 // Version information
 const (
-	Version = "0.1.1"
+	Version = "0.1.0"
 )
 
 // Define custom flag types to support both short and long options
