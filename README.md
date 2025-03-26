@@ -21,7 +21,7 @@ Download the latest binary for your platform from the [GitHub Releases](https://
 ### Go install
 
 ```bash
-go install github.com/yashikota/genenv@latest
+go install github.com/yashikota/genenv/cmd/genenv@latest
 ```
 
 ## Usage
