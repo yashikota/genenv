@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 // TestResult represents the result of a test
@@ -93,7 +93,7 @@ func main() {
 	for _, example := range examples {
 		fmt.Printf("Testing %s example (%s)...\n", example.name, example.description)
 		exampleDir := filepath.Join(currentDir, example.name)
-		
+
 		// Check if example directory exists
 		if _, err := os.Stat(exampleDir); os.IsNotExist(err) {
 			result := TestResult{
@@ -105,10 +105,10 @@ func main() {
 			fmt.Printf("❌ %s: %s\n\n", example.name, result.Message)
 			continue
 		}
-		
+
 		result := example.testFunc(exampleDir, genenvPath)
 		results = append(results, result)
-		
+
 		if result.Success {
 			fmt.Printf("✅ %s: %s\n\n", example.name, result.Message)
 		} else {
@@ -129,7 +129,7 @@ func main() {
 	}
 
 	fmt.Printf("\n%d/%d tests passed\n", passCount, len(results))
-	
+
 	// Exit with error code if any tests failed
 	if passCount < len(results) {
 		os.Exit(1)
@@ -143,12 +143,12 @@ func findGenenvBinary() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get current directory: %w", err)
 	}
-	
+
 	genenvPath := filepath.Join(currentDir, "genenv")
 	if _, err := os.Stat(genenvPath); err == nil {
 		return genenvPath, nil
 	}
-	
+
 	genenvPathExe := filepath.Join(currentDir, "genenv.exe")
 	if _, err := os.Stat(genenvPathExe); err == nil {
 		return genenvPathExe, nil
@@ -160,7 +160,7 @@ func findGenenvBinary() (string, error) {
 	if _, err := os.Stat(parentGenenvPath); err == nil {
 		return parentGenenvPath, nil
 	}
-	
+
 	parentGenenvPathExe := filepath.Join(parentDir, "genenv.exe")
 	if _, err := os.Stat(parentGenenvPathExe); err == nil {
 		return parentGenenvPathExe, nil
@@ -172,7 +172,7 @@ func findGenenvBinary() (string, error) {
 	if err := cmd.Run(); err == nil {
 		return buildPath, nil
 	}
-	
+
 	buildPathExe := filepath.Join(currentDir, "genenv.exe")
 	if _, err := os.Stat(buildPathExe); err == nil {
 		return buildPathExe, nil
@@ -557,7 +557,7 @@ func testEscapedExample(exampleDir, genenvPath string) TestResult {
 
 	// Enhanced validation for escaped placeholders
 	envLines := strings.Split(string(envContent), "\n")
-	
+
 	// Create a map of environment variable names to their values
 	envVars := make(map[string]string)
 	for _, line := range envLines {
@@ -568,11 +568,11 @@ func testEscapedExample(exampleDir, genenvPath string) TestResult {
 			}
 		}
 	}
-	
+
 	// Check that escaped placeholders were preserved and normal placeholders were replaced
 	escapedFound := false
 	normalFound := false
-	
+
 	// Check for escaped placeholders
 	for _, key := range []string{"TEMPLATE_EXAMPLE", "ANOTHER_EXAMPLE", "ESCAPED_QUOTED"} {
 		if value, ok := envVars[key]; ok {
@@ -582,7 +582,7 @@ func testEscapedExample(exampleDir, genenvPath string) TestResult {
 			}
 		}
 	}
-	
+
 	// Check for normal placeholders that should be replaced
 	for _, key := range []string{"API_KEY", "API_SECRET", "QUOTED_EXAMPLE"} {
 		if value, ok := envVars[key]; ok {
@@ -592,7 +592,7 @@ func testEscapedExample(exampleDir, genenvPath string) TestResult {
 			}
 		}
 	}
-	
+
 	if !escapedFound {
 		return TestResult{
 			Name:    "escaped",
@@ -600,7 +600,7 @@ func testEscapedExample(exampleDir, genenvPath string) TestResult {
 			Message: "Escaped placeholders were not preserved in the .env file",
 		}
 	}
-	
+
 	if !normalFound {
 		return TestResult{
 			Name:    "escaped",
@@ -668,8 +668,8 @@ func testCompareExample(exampleDir, genenvPath string) TestResult {
 	// Check that existing values were preserved
 	envStr := string(envContent)
 	if !strings.Contains(envStr, "APP_NAME=My App") ||
-	   !strings.Contains(envStr, "APP_ENV=development") ||
-	   !strings.Contains(envStr, "APP_DEBUG=true") {
+		!strings.Contains(envStr, "APP_ENV=development") ||
+		!strings.Contains(envStr, "APP_DEBUG=true") {
 		return TestResult{
 			Name:    "compare-existing",
 			Success: false,
@@ -679,8 +679,8 @@ func testCompareExample(exampleDir, genenvPath string) TestResult {
 
 	// Check that new fields were added
 	if !strings.Contains(envStr, "APP_KEY=") ||
-	   !strings.Contains(envStr, "DB_USERNAME=") ||
-	   !strings.Contains(envStr, "DB_PASSWORD=") {
+		!strings.Contains(envStr, "DB_USERNAME=") ||
+		!strings.Contains(envStr, "DB_PASSWORD=") {
 		return TestResult{
 			Name:    "compare-existing",
 			Success: false,
@@ -713,7 +713,7 @@ func testCharsetExample(exampleDir, genenvPath string) TestResult {
 
 	// Test with different character sets
 	charsets := []string{"alphanumeric", "alphabetic", "uppercase", "lowercase", "numeric"}
-	
+
 	for _, charset := range charsets {
 		// Run genenv with the specific charset
 		templatePath := filepath.Join(exampleDir, ".env.example")

@@ -154,7 +154,7 @@ func (g *Generator) processTemplateLines(lines []string, existingValues map[stri
 			matches := re.FindStringSubmatch(escapedValue)
 			if len(matches) > 1 {
 				placeholderName := matches[1]
-				
+
 				// Check if this field exists in the existing .env file and we should skip it
 				if existingValue, exists := existingValues[key]; exists && g.config.SkipExisting {
 					// Use existing value
@@ -276,10 +276,10 @@ func (g *Generator) ParseTemplateMetadata() (map[string]TemplateField, error) {
 
 	fields := make(map[string]TemplateField)
 	scanner := bufio.NewScanner(file)
-	
+
 	// Regular expression to match ${variable} pattern
 	placeholderRe := regexp.MustCompile(`\${([^}]+)}`)
-	
+
 	// Regular expression to match metadata in comments: # @field_name [required] (type) description
 	metadataRe := regexp.MustCompile(`#\s*@([a-zA-Z0-9_]+)\s*(?:\[([^\]]+)\])?\s*(?:\(([^)]+)\))?\s*(.*)`)
 
@@ -288,7 +288,7 @@ func (g *Generator) ParseTemplateMetadata() (map[string]TemplateField, error) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		
+
 		// Check if line is a metadata comment
 		if matches := metadataRe.FindStringSubmatch(line); len(matches) > 1 {
 			key := matches[1]
@@ -299,12 +299,12 @@ func (g *Generator) ParseTemplateMetadata() (map[string]TemplateField, error) {
 				Type:        strings.ToLower(matches[3]),
 				Description: strings.TrimSpace(matches[4]),
 			}
-			
+
 			// Set default type if not specified
 			if currentField.Type == "" {
 				currentField.Type = "string" // Default type
 			}
-			
+
 			// Normalize type names
 			switch currentField.Type {
 			case "integer":
@@ -314,7 +314,7 @@ func (g *Generator) ParseTemplateMetadata() (map[string]TemplateField, error) {
 			case "double":
 				currentField.Type = "float"
 			}
-			
+
 			// Validate supported types
 			validTypes := map[string]bool{
 				"string": true,
@@ -325,28 +325,28 @@ func (g *Generator) ParseTemplateMetadata() (map[string]TemplateField, error) {
 				"email":  true,
 				"ip":     true,
 			}
-			
+
 			if !validTypes[currentField.Type] {
-				fmt.Printf("Warning: Unsupported type '%s' for field '%s', defaulting to 'string'\n", 
+				fmt.Printf("Warning: Unsupported type '%s' for field '%s', defaulting to 'string'\n",
 					currentField.Type, key)
 				currentField.Type = "string"
 			}
-			
+
 			fields[key] = currentField
 			continue
 		}
-		
+
 		// Check if line contains a variable assignment
 		if strings.Contains(line, "=") {
 			parts := strings.SplitN(line, "=", 2)
 			if len(parts) == 2 {
 				key := strings.TrimSpace(parts[0])
 				value := strings.TrimSpace(parts[1])
-				
+
 				// Check if this is a placeholder
 				if matches := placeholderRe.FindStringSubmatch(value); len(matches) > 1 {
 					placeholderName := matches[1]
-					
+
 					// If we have metadata for this field, update it with the key
 					if field, exists := fields[placeholderName]; exists {
 						field.Key = key
@@ -384,7 +384,7 @@ func (g *Generator) RunInteractive() error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Check if we need to compare with existing .env file
 	existingValues := make(map[string]string)
 	if g.config.CompareWithEnv {
@@ -396,19 +396,19 @@ func (g *Generator) RunInteractive() error {
 			}
 		}
 	}
-	
+
 	// Read template file
 	templateLines, err := g.readTemplateFile()
 	if err != nil {
 		return err
 	}
-	
+
 	// Process template interactively
 	outputLines, err := g.processTemplateInteractively(templateLines, fields, existingValues)
 	if err != nil {
 		return err
 	}
-	
+
 	// Write output file
 	return g.writeOutputFile(outputLines)
 }
@@ -420,19 +420,19 @@ func (g *Generator) readEnvFile(path string) (map[string]string, error) {
 		return nil, err
 	}
 	defer file.Close()
-	
+
 	envVars := make(map[string]string)
 	scanner := bufio.NewScanner(file)
-	
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		line = strings.TrimSpace(line)
-		
+
 		// Skip empty lines and comments
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		
+
 		// Parse key-value pairs
 		parts := strings.SplitN(line, "=", 2)
 		if len(parts) == 2 {
@@ -441,11 +441,11 @@ func (g *Generator) readEnvFile(path string) (map[string]string, error) {
 			envVars[key] = value
 		}
 	}
-	
+
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
-	
+
 	return envVars, nil
 }
 
@@ -453,26 +453,26 @@ func (g *Generator) readEnvFile(path string) (map[string]string, error) {
 func (g *Generator) processTemplateInteractively(lines []string, fields map[string]TemplateField, existingValues map[string]string) ([]string, error) {
 	// Keep track of generated values to ensure they're different
 	generatedValues := make(map[string]string)
-	
+
 	// Regular expression to match ${variable} pattern
 	re := regexp.MustCompile(`\${([^}]+)}`)
-	
+
 	result := make([]string, 0, len(lines))
-	
+
 	reader := bufio.NewReader(os.Stdin)
-	
+
 	// If we're comparing with existing .env, show which fields are new
 	if g.config.CompareWithEnv {
 		fmt.Println("Fields marked with [NEW] are not present in the existing .env file.")
 	}
-	
+
 	// Validate user input based on field type
 	validateInput := func(input string, fieldType string) (string, bool) {
 		input = strings.TrimSpace(input)
 		if input == "" {
 			return input, true // Empty input is valid, will use default later
 		}
-		
+
 		switch fieldType {
 		case "int", "integer":
 			_, err := strconv.Atoi(input)
@@ -525,40 +525,40 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 				}
 			}
 		}
-		
+
 		return input, true
 	}
-	
+
 	for _, line := range lines {
 		// Skip empty lines and comments
 		if strings.TrimSpace(line) == "" || strings.HasPrefix(strings.TrimSpace(line), "#") {
 			result = append(result, line)
 			continue
 		}
-		
+
 		// Check if line contains a variable assignment
 		parts := strings.SplitN(line, "=", 2)
 		if len(parts) != 2 {
 			result = append(result, line)
 			continue
 		}
-		
+
 		key := strings.TrimSpace(parts[0])
 		value := strings.TrimSpace(parts[1])
-		
+
 		// Handle escaped placeholders: replace \${...} with a temporary marker
 		tempMarker := "##ESCAPED_PLACEHOLDER##"
 		escapedValue := strings.ReplaceAll(value, `\${`, tempMarker)
-		
+
 		// Check if value contains a placeholder
 		if re.MatchString(escapedValue) {
 			matches := re.FindStringSubmatch(escapedValue)
 			if len(matches) > 1 {
 				placeholderName := matches[1]
-				
+
 				// Check if this field exists in the existing .env file
 				existingValue, existsInEnv := existingValues[key]
-				
+
 				// Skip if configured to skip existing values
 				if existsInEnv && g.config.SkipExisting {
 					generatedValues[placeholderName] = existingValue
@@ -568,13 +568,13 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 					fmt.Printf("Using existing value for %s: %s\n", key, existingValue)
 					continue
 				}
-				
+
 				// Get field metadata
 				field, hasMetadata := fields[placeholderName]
-				
+
 				// Generate or prompt for value
 				var fieldValue string
-				
+
 				if g.config.Interactive {
 					// Prompt user for input
 					var prompt string
@@ -583,7 +583,7 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 					} else {
 						prompt = key
 					}
-					
+
 					// Add required/optional indicator
 					if hasMetadata {
 						if field.Required {
@@ -592,26 +592,26 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 							prompt += ", [OPTIONAL]"
 						}
 					}
-					
+
 					// Add type information
 					if hasMetadata && field.Type != "" && field.Type != "string" {
 						prompt += fmt.Sprintf(", type: %s", field.Type)
 					}
-					
+
 					// Show if field is new compared to existing .env
 					if g.config.CompareWithEnv && !existsInEnv {
 						prompt += " [NEW]"
 					}
-					
+
 					// Show default value if exists
 					if hasMetadata && field.DefaultValue != "" {
 						prompt += fmt.Sprintf(", default: %s", field.DefaultValue)
 					} else if existsInEnv {
 						prompt += fmt.Sprintf(", current: %s", existingValue)
 					}
-					
+
 					prompt += ": "
-					
+
 					// Loop until valid input is provided
 					for {
 						fmt.Print(prompt)
@@ -619,9 +619,9 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 						if err != nil {
 							return nil, fmt.Errorf("error reading input: %w", err)
 						}
-						
+
 						fieldValue = strings.TrimSpace(input)
-						
+
 						// Validate input based on field type
 						if hasMetadata && field.Type != "" && field.Type != "string" {
 							validatedValue, isValid := validateInput(fieldValue, field.Type)
@@ -630,7 +630,7 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 							}
 							fieldValue = validatedValue
 						}
-						
+
 						// Use default value if input is empty
 						if fieldValue == "" {
 							if hasMetadata && field.DefaultValue != "" {
@@ -653,7 +653,7 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 								fmt.Printf("Generated random value: %s\n", fieldValue)
 							}
 						}
-						
+
 						break
 					}
 				} else {
@@ -668,16 +668,16 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 						fieldValue = generatedValues[placeholderName]
 					}
 				}
-				
+
 				// Store the value
 				generatedValues[placeholderName] = fieldValue
-				
+
 				// Replace placeholder with generated value
 				newValue := re.ReplaceAllString(escapedValue, generatedValues[matches[1]])
-				
+
 				// Restore escaped placeholders
 				newValue = strings.ReplaceAll(newValue, tempMarker, `${`)
-				
+
 				result = append(result, fmt.Sprintf("%s=%s", key, newValue))
 			} else {
 				// Restore escaped placeholders
@@ -690,6 +690,6 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 			result = append(result, fmt.Sprintf("%s=%s", key, restoredValue))
 		}
 	}
-	
+
 	return result, nil
 }

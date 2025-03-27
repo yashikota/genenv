@@ -530,14 +530,14 @@ func TestFieldValidation(t *testing.T) {
 		// String validation
 		{"Valid string", "string", "hello", true},
 		{"Empty string", "string", "", true},
-		
+
 		// Integer validation
 		{"Valid integer", "int", "123", true},
 		{"Valid negative integer", "int", "-123", true},
 		{"Invalid integer (float)", "int", "123.45", false},
 		{"Invalid integer (text)", "int", "abc", false},
 		{"Invalid integer (mixed)", "int", "123abc", false},
-		
+
 		// Boolean validation
 		{"Valid boolean (true)", "bool", "true", true},
 		{"Valid boolean (false)", "bool", "false", true},
@@ -546,27 +546,27 @@ func TestFieldValidation(t *testing.T) {
 		{"Valid boolean (1)", "bool", "1", true},
 		{"Valid boolean (0)", "bool", "0", true},
 		{"Invalid boolean", "bool", "maybe", false},
-		
+
 		// Float validation
 		{"Valid float", "float", "123.45", true},
 		{"Valid float (integer)", "float", "123", true},
 		{"Valid float (negative)", "float", "-123.45", true},
 		{"Invalid float", "float", "abc", false},
 		{"Invalid float (mixed)", "float", "123.45abc", false},
-		
+
 		// URL validation
 		{"Valid URL (http)", "url", "http://example.com", true},
 		{"Valid URL (https)", "url", "https://example.com/path?query=value", true},
 		{"Invalid URL (no protocol)", "url", "example.com", false},
 		{"Invalid URL (wrong protocol)", "url", "ftp://example.com", false},
-		
+
 		// Email validation
 		{"Valid email", "email", "user@example.com", true},
 		{"Valid email (subdomain)", "email", "user@sub.example.com", true},
 		{"Invalid email (no @)", "email", "userexample.com", false},
 		{"Invalid email (no domain)", "email", "user@", false},
 		{"Invalid email (spaces)", "email", "user @example.com", false},
-		
+
 		// IP validation
 		{"Valid IP", "ip", "192.168.1.1", true},
 		{"Valid IP (zeros)", "ip", "0.0.0.0", true},
@@ -579,7 +579,7 @@ func TestFieldValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ValidateFieldValue(tt.input, tt.fieldType)
-			
+
 			if result != tt.valid {
 				t.Errorf("ValidateFieldValue(%q, %q) = %v, want %v", tt.input, tt.fieldType, result, tt.valid)
 			}
@@ -608,7 +608,7 @@ func TestNormalizeFieldValue(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := NormalizeFieldValue(tt.input, tt.fieldType)
-			
+
 			if result != tt.expected {
 				t.Errorf("NormalizeFieldValue(%q, %q) = %q, want %q", tt.input, tt.fieldType, result, tt.expected)
 			}
@@ -671,18 +671,18 @@ SIMPLE_VALUE=${simple_value}
 
 	// Check parsed metadata
 	expectedFields := map[string]struct {
-		key      string
-		required bool
-		fieldType string
+		key         string
+		required    bool
+		fieldType   string
 		description string
 	}{
-		"db_password": {"DB_PASSWORD", true, "string", "Database password"},
-		"db_port":     {"DB_PORT", false, "int", "Database port"},
-		"debug_mode":  {"DEBUG", false, "bool", "Enable debug mode"},
-		"rate_limit":  {"RATE_LIMIT", false, "float", "API rate limit"},
-		"api_url":     {"API_URL", false, "url", "API URL"},
-		"admin_email": {"ADMIN_EMAIL", false, "email", "Admin email"},
-		"server_ip":   {"SERVER_IP", false, "ip", "Server IP address"},
+		"db_password":  {"DB_PASSWORD", true, "string", "Database password"},
+		"db_port":      {"DB_PORT", false, "int", "Database port"},
+		"debug_mode":   {"DEBUG", false, "bool", "Enable debug mode"},
+		"rate_limit":   {"RATE_LIMIT", false, "float", "API rate limit"},
+		"api_url":      {"API_URL", false, "url", "API URL"},
+		"admin_email":  {"ADMIN_EMAIL", false, "email", "Admin email"},
+		"server_ip":    {"SERVER_IP", false, "ip", "Server IP address"},
 		"simple_value": {"SIMPLE_VALUE", false, "string", ""},
 	}
 

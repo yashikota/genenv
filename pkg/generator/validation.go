@@ -11,7 +11,7 @@ func ValidateFieldValue(input string, fieldType string) bool {
 	if input == "" {
 		return true // Empty input is valid, will use default later
 	}
-	
+
 	switch fieldType {
 	case "int", "integer":
 		_, err := strconv.Atoi(input)
@@ -52,7 +52,7 @@ func NormalizeFieldValue(input string, fieldType string) string {
 	if input == "" {
 		return input
 	}
-	
+
 	switch fieldType {
 	case "bool", "boolean":
 		lower := strings.ToLower(input)
@@ -62,6 +62,6 @@ func NormalizeFieldValue(input string, fieldType string) string {
 			return "false"
 		}
 	}
-	
+
 	return input
 }
