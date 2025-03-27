@@ -519,3 +519,200 @@ API_TOKEN=${api_token}
 		})
 	}
 }
+
+func TestFieldValidation(t *testing.T) {
+	tests := []struct {
+		name      string
+		fieldType string
+		input     string
+		valid     bool
+	}{
+		// String validation
+		{"Valid string", "string", "hello", true},
+		{"Empty string", "string", "", true},
+		
+		// Integer validation
+		{"Valid integer", "int", "123", true},
+		{"Valid negative integer", "int", "-123", true},
+		{"Invalid integer (float)", "int", "123.45", false},
+		{"Invalid integer (text)", "int", "abc", false},
+		{"Invalid integer (mixed)", "int", "123abc", false},
+		
+		// Boolean validation
+		{"Valid boolean (true)", "bool", "true", true},
+		{"Valid boolean (false)", "bool", "false", true},
+		{"Valid boolean (yes)", "bool", "yes", true},
+		{"Valid boolean (no)", "bool", "no", true},
+		{"Valid boolean (1)", "bool", "1", true},
+		{"Valid boolean (0)", "bool", "0", true},
+		{"Invalid boolean", "bool", "maybe", false},
+		
+		// Float validation
+		{"Valid float", "float", "123.45", true},
+		{"Valid float (integer)", "float", "123", true},
+		{"Valid float (negative)", "float", "-123.45", true},
+		{"Invalid float", "float", "abc", false},
+		{"Invalid float (mixed)", "float", "123.45abc", false},
+		
+		// URL validation
+		{"Valid URL (http)", "url", "http://example.com", true},
+		{"Valid URL (https)", "url", "https://example.com/path?query=value", true},
+		{"Invalid URL (no protocol)", "url", "example.com", false},
+		{"Invalid URL (wrong protocol)", "url", "ftp://example.com", false},
+		
+		// Email validation
+		{"Valid email", "email", "user@example.com", true},
+		{"Valid email (subdomain)", "email", "user@sub.example.com", true},
+		{"Invalid email (no @)", "email", "userexample.com", false},
+		{"Invalid email (no domain)", "email", "user@", false},
+		{"Invalid email (spaces)", "email", "user @example.com", false},
+		
+		// IP validation
+		{"Valid IP", "ip", "192.168.1.1", true},
+		{"Valid IP (zeros)", "ip", "0.0.0.0", true},
+		{"Valid IP (max)", "ip", "255.255.255.255", true},
+		{"Invalid IP (out of range)", "ip", "256.256.256.256", false},
+		{"Invalid IP (wrong format)", "ip", "192.168.1", false},
+		{"Invalid IP (letters)", "ip", "192.168.1.a", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ValidateFieldValue(tt.input, tt.fieldType)
+			
+			if result != tt.valid {
+				t.Errorf("ValidateFieldValue(%q, %q) = %v, want %v", tt.input, tt.fieldType, result, tt.valid)
+			}
+		})
+	}
+}
+
+func TestNormalizeFieldValue(t *testing.T) {
+	tests := []struct {
+		name      string
+		fieldType string
+		input     string
+		expected  string
+	}{
+		{"Boolean yes", "bool", "yes", "true"},
+		{"Boolean 1", "bool", "1", "true"},
+		{"Boolean no", "bool", "no", "false"},
+		{"Boolean 0", "bool", "0", "false"},
+		{"Boolean true", "bool", "true", "true"},
+		{"Boolean false", "bool", "false", "false"},
+		{"Non-boolean", "string", "test", "test"},
+		{"Empty string", "bool", "", ""},
+		{"Whitespace", "bool", "  ", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := NormalizeFieldValue(tt.input, tt.fieldType)
+			
+			if result != tt.expected {
+				t.Errorf("NormalizeFieldValue(%q, %q) = %q, want %q", tt.input, tt.fieldType, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestParseTemplateMetadata(t *testing.T) {
+	// Create a temporary directory for test files
+	tempDir, err := os.MkdirTemp("", "genenv-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create a test template file with metadata
+	templatePath := filepath.Join(tempDir, ".env.example")
+	templateContent := `
+# @db_password [required] (string) Database password
+DB_PASSWORD=${db_password}
+
+# @db_port [optional] (int) Database port
+DB_PORT=${db_port}
+
+# @debug_mode [optional] (bool) Enable debug mode
+DEBUG=${debug_mode}
+
+# @rate_limit [optional] (float) API rate limit
+RATE_LIMIT=${rate_limit}
+
+# @api_url [optional] (url) API URL
+API_URL=${api_url}
+
+# @admin_email [optional] (email) Admin email
+ADMIN_EMAIL=${admin_email}
+
+# @server_ip [optional] (ip) Server IP address
+SERVER_IP=${server_ip}
+
+# No metadata
+SIMPLE_VALUE=${simple_value}
+`
+	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
+		t.Fatalf("Failed to write template file: %v", err)
+	}
+
+	// Create generator
+	config := Config{
+		TemplatePath: templatePath,
+		OutputPath:   filepath.Join(tempDir, ".env"),
+		Force:        true,
+	}
+	gen := New(config)
+
+	// Parse metadata
+	fields, err := gen.ParseTemplateMetadata()
+	if err != nil {
+		t.Fatalf("Failed to parse template metadata: %v", err)
+	}
+
+	// Check parsed metadata
+	expectedFields := map[string]struct {
+		key      string
+		required bool
+		fieldType string
+		description string
+	}{
+		"db_password": {"DB_PASSWORD", true, "string", "Database password"},
+		"db_port":     {"DB_PORT", false, "int", "Database port"},
+		"debug_mode":  {"DEBUG", false, "bool", "Enable debug mode"},
+		"rate_limit":  {"RATE_LIMIT", false, "float", "API rate limit"},
+		"api_url":     {"API_URL", false, "url", "API URL"},
+		"admin_email": {"ADMIN_EMAIL", false, "email", "Admin email"},
+		"server_ip":   {"SERVER_IP", false, "ip", "Server IP address"},
+		"simple_value": {"SIMPLE_VALUE", false, "string", ""},
+	}
+
+	// Check that all expected fields are present
+	for name, expected := range expectedFields {
+		field, ok := fields[name]
+		if !ok {
+			t.Errorf("Expected field %s not found", name)
+			continue
+		}
+
+		if field.Key != expected.key {
+			t.Errorf("Field %s: expected key %s, got %s", name, expected.key, field.Key)
+		}
+
+		if field.Required != expected.required {
+			t.Errorf("Field %s: expected required %v, got %v", name, expected.required, field.Required)
+		}
+
+		if field.Type != expected.fieldType {
+			t.Errorf("Field %s: expected type %s, got %s", name, expected.fieldType, field.Type)
+		}
+
+		if field.Description != expected.description {
+			t.Errorf("Field %s: expected description %s, got %s", name, expected.description, field.Description)
+		}
+	}
+
+	// Check that there are no unexpected fields
+	if len(fields) != len(expectedFields) {
+		t.Errorf("Expected %d fields, got %d", len(expectedFields), len(fields))
+	}
+}

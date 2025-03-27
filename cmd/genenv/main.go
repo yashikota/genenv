@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/yashikota/genenv/pkg/generator"
@@ -12,7 +13,7 @@ import (
 
 // Version information
 const (
-	Version = "0.1.1"
+	Version = "0.2.0"
 )
 
 // Define custom flag types to support both short and long options
@@ -92,52 +93,73 @@ func main() {
 	var inputFlag stringFlag
 	var lengthFlag intFlag
 	var charsetFlag stringFlag
+	var interactiveFlag boolFlag
+	var compareWithEnvFlag boolFlag
+	var skipExistingFlag boolFlag
+	var createNewFlag boolFlag
 
 	// Register both short and long versions of flags
 	flag.Var(&forceFlag, "force", "Force overwrite of existing .env file")
-	flag.Var(&forceFlag, "f", "Force overwrite of existing .env file (shorthand)")
+	flag.Var(&forceFlag, "f", "Force overwrite of existing .env file")
 
-	flag.Var(&outputFlag, "output", "Output file path")
-	flag.Var(&outputFlag, "o", "Output file path (shorthand)")
+	flag.Var(&outputFlag, "output", "Output file path (default \".env\")")
+	flag.Var(&outputFlag, "o", "Output file path (default \".env\")")
 	outputFlag.value = ".env" // Default value
 
 	flag.Var(&versionFlag, "version", "Show version information")
-	flag.Var(&versionFlag, "v", "Show version information (shorthand)")
+	flag.Var(&versionFlag, "v", "Show version information")
 
 	flag.Var(&helpFlag, "help", "Show help information")
-	flag.Var(&helpFlag, "h", "Show help information (shorthand)")
+	flag.Var(&helpFlag, "h", "Show help information")
 
 	flag.Var(&inputFlag, "input", "Read template from file instead of command line argument")
-	flag.Var(&inputFlag, "i", "Read template from file instead of command line argument (shorthand)")
+	flag.Var(&inputFlag, "i", "Read template from file instead of command line argument")
 
 	flag.Var(&lengthFlag, "length", "Length of generated random values (default: 24)")
-	flag.Var(&lengthFlag, "l", "Length of generated random values (shorthand)")
+	flag.Var(&lengthFlag, "l", "Length of generated random values (default: 24)")
 	lengthFlag.value = 24 // Default value
 
 	flag.Var(&charsetFlag, "charset", "Character set for generated values: alphanumeric, alphabetic, uppercase, lowercase, numeric (default: alphanumeric)")
-	flag.Var(&charsetFlag, "c", "Character set for generated values (shorthand)")
+	flag.Var(&charsetFlag, "c", "Character set for generated values: alphanumeric, alphabetic, uppercase, lowercase, numeric (default: alphanumeric)")
 	charsetFlag.value = "alphanumeric" // Default value
 
+	flag.Var(&interactiveFlag, "interactive", "Run in interactive mode, prompting for values")
+	flag.Var(&interactiveFlag, "I", "Run in interactive mode, prompting for values")
+
+	flag.Var(&compareWithEnvFlag, "compare", "Compare with existing .env file and add only new fields")
+	flag.Var(&compareWithEnvFlag, "C", "Compare with existing .env file and add only new fields")
+
+	flag.Var(&skipExistingFlag, "skip-existing", "Skip fields that already exist in the .env file")
+	flag.Var(&skipExistingFlag, "S", "Skip fields that already exist in the .env file")
+
+	flag.Var(&createNewFlag, "new", "Create a new .env file from scratch without a template")
+	flag.Var(&createNewFlag, "N", "Create a new .env file from scratch without a template")
+
 	// Custom usage function
+	oldUsage := flag.Usage
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "genenv - A tool to generate .env files from templates\n\n")
 		fmt.Fprintf(os.Stderr, "Usage: genenv [options] <template-file>\n")
-		fmt.Fprintf(os.Stderr, "   or: genenv -i/--input <template-file> [options]\n\n")
+		fmt.Fprintf(os.Stderr, "   or: genenv -i/--input <template-file> [options]\n")
+		fmt.Fprintf(os.Stderr, "   or: genenv (runs in interactive mode)\n\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
-		fmt.Fprintf(os.Stderr, "  -f, --force           Force overwrite of existing .env file\n")
-		fmt.Fprintf(os.Stderr, "  -o, --output string   Output file path (default \".env\")\n")
-		fmt.Fprintf(os.Stderr, "  -i, --input string    Read template from file instead of command line argument\n")
-		fmt.Fprintf(os.Stderr, "  -l, --length int      Length of generated random values (default: 24)\n")
-		fmt.Fprintf(os.Stderr, "  -c, --charset string  Character set for generated values (default: alphanumeric)\n")
-		fmt.Fprintf(os.Stderr, "                        Valid options: alphanumeric, alphabetic, uppercase, lowercase, numeric\n")
-		fmt.Fprintf(os.Stderr, "  -h, --help            Show help information\n")
-		fmt.Fprintf(os.Stderr, "  -v, --version         Show version information\n\n")
-		fmt.Fprintf(os.Stderr, "Examples:\n")
+		oldUsage()
+		fmt.Fprintf(os.Stderr, "\nExamples:\n")
 		fmt.Fprintf(os.Stderr, "  genenv .env.example\n")
 		fmt.Fprintf(os.Stderr, "  genenv --input .env.example --output .env.production\n")
 		fmt.Fprintf(os.Stderr, "  genenv -i .env.example -o .env.production -f\n")
 		fmt.Fprintf(os.Stderr, "  genenv .env.example --length 32 --charset numeric\n")
 		fmt.Fprintf(os.Stderr, "  genenv .env.example -l 16 -c uppercase\n")
+		fmt.Fprintf(os.Stderr, "  genenv -I -i .env.example (interactive mode)\n")
+		fmt.Fprintf(os.Stderr, "  genenv -C -i .env.example (compare with existing .env)\n")
+		fmt.Fprintf(os.Stderr, "  genenv -S -i .env.example (skip existing fields)\n")
+		fmt.Fprintf(os.Stderr, "  genenv -N (create new .env file from scratch)\n\n")
+		fmt.Fprintf(os.Stderr, "Template Format:\n")
+		fmt.Fprintf(os.Stderr, "  # @field_name [required] (type) Description\n")
+		fmt.Fprintf(os.Stderr, "  KEY=${field_name}\n\n")
+		fmt.Fprintf(os.Stderr, "  Example:\n")
+		fmt.Fprintf(os.Stderr, "  # @db_password [required] (string) Database password\n")
+		fmt.Fprintf(os.Stderr, "  DB_PASSWORD=${db_password}\n")
 	}
 
 	// Parse flags
@@ -156,6 +178,8 @@ func main() {
 	}
 
 	var templatePath string
+	runInteractive := false
+	createNew := createNewFlag.set && createNewFlag.value
 
 	// Get template file path either from -i/--input flag or positional argument
 	if inputFlag.set && inputFlag.value != "" {
@@ -164,11 +188,146 @@ func main() {
 		// Get template file path from arguments
 		args := flag.Args()
 		if len(args) < 1 {
-			fmt.Println("Error: Template file path is required")
-			flag.Usage()
-			os.Exit(1)
+			// If no template file is provided, enter fully interactive mode
+			runInteractive = true
+			interactiveFlag.value = true
+
+			// In fully interactive mode, prompt for all configuration options
+			reader := bufio.NewReader(os.Stdin)
+
+			fmt.Println("Welcome to genenv interactive mode!")
+			fmt.Println("Press Enter to use default values.")
+
+			// Ask if user wants to create a new .env file from scratch
+			if !createNew {
+				fmt.Print("Create a new .env file from scratch without a template? (y/N): ")
+				input, err := reader.ReadString('\n')
+				if err != nil {
+					fmt.Printf("Error reading input: %v\n", err)
+					os.Exit(1)
+				}
+
+				createNewValue := strings.TrimSpace(strings.ToLower(input))
+				createNew = createNewValue == "y" || createNewValue == "yes"
+			}
+
+			if !createNew {
+				// Prompt for template file
+				fmt.Print("Enter template file path (.env.example): ")
+				input, err := reader.ReadString('\n')
+				if err != nil {
+					fmt.Printf("Error reading input: %v\n", err)
+					os.Exit(1)
+				}
+
+				templatePath = strings.TrimSpace(input)
+				if templatePath == "" {
+					templatePath = ".env.example"
+				}
+			} else {
+				// Create a temporary template file with common environment variables
+				tempTemplate, err := createTemporaryTemplate()
+				if err != nil {
+					fmt.Printf("Error creating temporary template: %v\n", err)
+					os.Exit(1)
+				}
+				templatePath = tempTemplate
+				fmt.Printf("Created temporary template file: %s\n", templatePath)
+			}
+
+			// Prompt for output file
+			fmt.Printf("Enter output file path (%s): ", outputFlag.value)
+			input, err := reader.ReadString('\n')
+			if err != nil {
+				fmt.Printf("Error reading input: %v\n", err)
+				os.Exit(1)
+			}
+
+			outputValue := strings.TrimSpace(input)
+			if outputValue != "" {
+				outputFlag.value = outputValue
+			}
+
+			// Prompt for value length
+			fmt.Printf("Enter length for generated values (%d): ", lengthFlag.value)
+			input, err = reader.ReadString('\n')
+			if err != nil {
+				fmt.Printf("Error reading input: %v\n", err)
+				os.Exit(1)
+			}
+
+			lengthValue := strings.TrimSpace(input)
+			if lengthValue != "" {
+				length, err := strconv.Atoi(lengthValue)
+				if err != nil {
+					fmt.Printf("Invalid length value, using default: %d\n", lengthFlag.value)
+				} else {
+					lengthFlag.value = length
+				}
+			}
+
+			// Prompt for charset
+			fmt.Printf("Enter charset for generated values (alphanumeric, alphabetic, uppercase, lowercase, numeric) [%s]: ", charsetFlag.value)
+			input, err = reader.ReadString('\n')
+			if err != nil {
+				fmt.Printf("Error reading input: %v\n", err)
+				os.Exit(1)
+			}
+
+			charsetValue := strings.TrimSpace(input)
+			if charsetValue != "" {
+				charsetFlag.value = charsetValue
+			}
+
+			// Prompt for compare with env
+			fmt.Print("Compare with existing .env file? (y/N): ")
+			input, err = reader.ReadString('\n')
+			if err != nil {
+				fmt.Printf("Error reading input: %v\n", err)
+				os.Exit(1)
+			}
+
+			compareValue := strings.TrimSpace(strings.ToLower(input))
+			compareWithEnvFlag.value = compareValue == "y" || compareValue == "yes"
+
+			// Prompt for skip existing
+			fmt.Print("Skip fields that already exist in the .env file? (y/N): ")
+			input, err = reader.ReadString('\n')
+			if err != nil {
+				fmt.Printf("Error reading input: %v\n", err)
+				os.Exit(1)
+			}
+
+			skipValue := strings.TrimSpace(strings.ToLower(input))
+			skipExistingFlag.value = skipValue == "y" || skipValue == "yes"
+
+			// Prompt for force overwrite
+			fmt.Print("Force overwrite of existing .env file? (y/N): ")
+			input, err = reader.ReadString('\n')
+			if err != nil {
+				fmt.Printf("Error reading input: %v\n", err)
+				os.Exit(1)
+			}
+
+			forceValue := strings.TrimSpace(strings.ToLower(input))
+			forceFlag.value = forceValue == "y" || forceValue == "yes"
+
+			fmt.Println("\nConfiguration summary:")
+			if createNew {
+				fmt.Println("Creating new .env file from scratch")
+			} else {
+				fmt.Printf("Template file: %s\n", templatePath)
+			}
+			fmt.Printf("Output file: %s\n", outputFlag.value)
+			fmt.Printf("Value length: %d\n", lengthFlag.value)
+			fmt.Printf("Charset: %s\n", charsetFlag.value)
+			fmt.Printf("Compare with existing .env: %t\n", compareWithEnvFlag.value)
+			fmt.Printf("Skip existing fields: %t\n", skipExistingFlag.value)
+			fmt.Printf("Force overwrite: %t\n", forceFlag.value)
+			fmt.Println()
+		} else {
+			templatePath = args[0]
 		}
-		templatePath = args[0]
 	}
 
 	// Validate charset
@@ -188,11 +347,14 @@ func main() {
 
 	// Create generator config
 	config := generator.Config{
-		TemplatePath: templatePath,
-		OutputPath:   outputFlag.value,
-		Force:        forceFlag.value,
-		ValueLength:  lengthFlag.value,
-		Charset:      charset,
+		TemplatePath:   templatePath,
+		OutputPath:     outputFlag.value,
+		Force:          forceFlag.value,
+		ValueLength:    lengthFlag.value,
+		Charset:        charset,
+		Interactive:    interactiveFlag.value || runInteractive,
+		CompareWithEnv: compareWithEnvFlag.value,
+		SkipExisting:   skipExistingFlag.value,
 	}
 
 	// Create generator
@@ -220,10 +382,77 @@ func main() {
 	}
 
 	// Generate .env file
-	if err := gen.Generate(); err != nil {
+	var err error
+	if config.Interactive {
+		err = gen.RunInteractive()
+	} else {
+		err = gen.Generate()
+	}
+
+	if err != nil {
 		fmt.Printf("Error generating .env file: %v\n", err)
 		os.Exit(1)
 	}
 
+	// Clean up temporary template file if we created one
+	if createNew && strings.HasPrefix(templatePath, os.TempDir()) {
+		os.Remove(templatePath)
+	}
+
 	fmt.Printf("Successfully generated %s from %s\n", config.OutputPath, templatePath)
+}
+
+// createTemporaryTemplate creates a temporary template file with common environment variables
+func createTemporaryTemplate() (string, error) {
+	tempFile, err := os.CreateTemp("", "genenv-template-*.env")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temporary template file: %w", err)
+	}
+	defer tempFile.Close()
+
+	// Write common environment variables to the template
+	templateContent := `# Database configuration
+# @db_host [optional] (string) Database host
+DB_HOST=${db_host}
+
+# @db_port [optional] (int) Database port
+DB_PORT=${db_port}
+
+# @db_name [required] (string) Database name
+DB_NAME=${db_name}
+
+# @db_user [required] (string) Database username
+DB_USER=${db_user}
+
+# @db_password [required] (string) Database password
+DB_PASSWORD=${db_password}
+
+# API configuration
+# @api_key [optional] (string) API key for external service
+API_KEY=${api_key}
+
+# @api_url [optional] (url) API URL
+API_URL=${api_url}
+
+# Application configuration
+# @app_env [optional] (string) Application environment (development, production, testing)
+APP_ENV=${app_env}
+
+# @debug [optional] (bool) Enable debug mode
+DEBUG=${debug}
+
+# @log_level [optional] (string) Log level (debug, info, warn, error)
+LOG_LEVEL=${log_level}
+
+# @secret_key [required] (string) Secret key for encryption/signing
+SECRET_KEY=${secret_key}
+
+# Add your custom environment variables below
+`
+
+	if _, err := tempFile.WriteString(templateContent); err != nil {
+		return "", fmt.Errorf("failed to write to temporary template file: %w", err)
+	}
+
+	return tempFile.Name(), nil
 }
