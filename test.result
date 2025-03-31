@@ -1,0 +1,326 @@
+# github.com/yashikota/genenv/examples/backup
+examples/backup/backup_example.go:41:18: not enough arguments in call to manager.ListBackups
+	have ()
+	want (string)
+examples/backup/backup_example.go:65:36: not enough arguments in call to manager.CleanOldBackups
+	have (time.Duration)
+	want (string, time.Duration)
+examples/backup/backup_example.go:70:17: not enough arguments in call to manager.ListBackups
+	have ()
+	want (string)
+# github.com/yashikota/genenv/examples/template
+examples/template/template_example.go:7:2: "path/filepath" imported and not used
+examples/template/template_example.go:41:4: unknown field Validation in struct literal of type template.Field
+examples/template/template_example.go:41:26: undefined: template.FieldValidation
+examples/template/template_example.go:57:4: unknown field Secret in struct literal of type template.Field
+examples/template/template_example.go:61:49: not enough arguments in call to manager.CreateTemplate
+	have (string, []template.Field)
+	want (string, string, []template.Field)
+examples/template/template_example.go:94:12: field.Secret undefined (type template.Field has no field or method Secret)
+examples/template/template_example.go:97:12: field.Validation undefined (type template.Field has no field or method Validation)
+examples/template/template_example.go:98:44: field.Validation undefined (type template.Field has no field or method Validation)
+examples/template/template_example.go:111:20: manager.GenerateEnvFile undefined (type *template.TemplateManager has no field or method GenerateEnvFile)
+=== RUN   TestInteractiveMode
+=== RUN   TestInteractiveMode/Interactive_mode_with_template
+    main_test.go:82: This test requires a refactored main function to be testable
+--- PASS: TestInteractiveMode (0.00s)
+    --- SKIP: TestInteractiveMode/Interactive_mode_with_template (0.00s)
+=== RUN   TestNewEnvFileCreation
+=== RUN   TestNewEnvFileCreation/Create_new_.env_file
+    main_test.go:205: This test requires a refactored main function to be testable
+--- PASS: TestNewEnvFileCreation (0.00s)
+    --- SKIP: TestNewEnvFileCreation/Create_new_.env_file (0.00s)
+PASS
+ok  	github.com/yashikota/genenv/cmd/genenv	(cached)
+?   	github.com/yashikota/genenv/examples	[no test files]
+FAIL	github.com/yashikota/genenv/examples/backup [build failed]
+?   	github.com/yashikota/genenv/examples/encryption	[no test files]
+FAIL	github.com/yashikota/genenv/examples/template [build failed]
+=== RUN   TestBackup
+--- PASS: TestBackup (0.00s)
+=== RUN   TestBackupDirCreation
+--- PASS: TestBackupDirCreation (0.00s)
+=== RUN   TestBackupNaming
+--- PASS: TestBackupNaming (0.00s)
+=== RUN   TestMultipleBackups
+--- PASS: TestMultipleBackups (3.00s)
+=== RUN   TestCleanOldBackups
+--- PASS: TestCleanOldBackups (3.00s)
+PASS
+ok  	github.com/yashikota/genenv/pkg/backup	(cached)
+=== RUN   TestEncryption
+=== RUN   TestEncryption/Simple_text
+=== RUN   TestEncryption/Empty_text
+=== RUN   TestEncryption/Long_text
+=== RUN   TestEncryption/Special_characters_in_password
+--- PASS: TestEncryption (0.34s)
+    --- PASS: TestEncryption/Simple_text (0.11s)
+    --- PASS: TestEncryption/Empty_text (0.07s)
+    --- PASS: TestEncryption/Long_text (0.07s)
+    --- PASS: TestEncryption/Special_characters_in_password (0.08s)
+=== RUN   TestEncryptionWithCustomConfig
+--- PASS: TestEncryptionWithCustomConfig (0.27s)
+=== RUN   TestEncryptionWithWrongPassword
+--- PASS: TestEncryptionWithWrongPassword (0.11s)
+=== RUN   TestEncryptionWithInvalidConfig
+=== RUN   TestEncryptionWithInvalidConfig/Invalid_salt_length
+=== RUN   TestEncryptionWithInvalidConfig/Invalid_iterations
+=== RUN   TestEncryptionWithInvalidConfig/Invalid_memory
+=== RUN   TestEncryptionWithInvalidConfig/Invalid_parallelism
+=== RUN   TestEncryptionWithInvalidConfig/Invalid_algorithm
+--- PASS: TestEncryptionWithInvalidConfig (0.00s)
+    --- PASS: TestEncryptionWithInvalidConfig/Invalid_salt_length (0.00s)
+    --- PASS: TestEncryptionWithInvalidConfig/Invalid_iterations (0.00s)
+    --- PASS: TestEncryptionWithInvalidConfig/Invalid_memory (0.00s)
+    --- PASS: TestEncryptionWithInvalidConfig/Invalid_parallelism (0.00s)
+    --- PASS: TestEncryptionWithInvalidConfig/Invalid_algorithm (0.00s)
+=== RUN   TestEncryptionPerformance
+--- PASS: TestEncryptionPerformance (0.03s)
+=== RUN   TestEncryptionEdgeCases
+=== RUN   TestEncryptionEdgeCases/Very_long_text
+=== RUN   TestEncryptionEdgeCases/Very_long_password
+=== RUN   TestEncryptionEdgeCases/Empty_password
+=== RUN   TestEncryptionEdgeCases/Unicode_text
+=== RUN   TestEncryptionEdgeCases/Unicode_password
+=== RUN   TestEncryptionEdgeCases/Binary_data
+--- PASS: TestEncryptionEdgeCases (0.44s)
+    --- PASS: TestEncryptionEdgeCases/Very_long_text (0.09s)
+    --- PASS: TestEncryptionEdgeCases/Very_long_password (0.09s)
+    --- PASS: TestEncryptionEdgeCases/Empty_password (0.00s)
+    --- PASS: TestEncryptionEdgeCases/Unicode_text (0.08s)
+    --- PASS: TestEncryptionEdgeCases/Unicode_password (0.09s)
+    --- PASS: TestEncryptionEdgeCases/Binary_data (0.08s)
+=== RUN   TestEncryptionErrorCases
+--- PASS: TestEncryptionErrorCases (0.08s)
+=== RUN   TestDeriveKeyConsistency
+--- PASS: TestDeriveKeyConsistency (0.11s)
+=== RUN   TestEncryptionConfigValidation
+=== RUN   TestEncryptionConfigValidation/Zero_memory
+=== RUN   TestEncryptionConfigValidation/Negative_iterations
+=== RUN   TestEncryptionConfigValidation/Invalid_salt_length
+=== RUN   TestEncryptionConfigValidation/Zero_parallelism
+--- PASS: TestEncryptionConfigValidation (0.00s)
+    --- PASS: TestEncryptionConfigValidation/Zero_memory (0.00s)
+    --- PASS: TestEncryptionConfigValidation/Negative_iterations (0.00s)
+    --- PASS: TestEncryptionConfigValidation/Invalid_salt_length (0.00s)
+    --- PASS: TestEncryptionConfigValidation/Zero_parallelism (0.00s)
+PASS
+ok  	github.com/yashikota/genenv/pkg/encryption	(cached)
+=== RUN   TestGenerator
+--- PASS: TestGenerator (0.00s)
+=== RUN   TestGeneratorExistingFile
+--- PASS: TestGeneratorExistingFile (0.00s)
+=== RUN   TestGeneratorComplexTemplate
+--- PASS: TestGeneratorComplexTemplate (0.00s)
+=== RUN   TestGeneratorErrorCases
+--- PASS: TestGeneratorErrorCases (0.00s)
+=== RUN   TestGeneratorCustomValueLength
+=== RUN   TestGeneratorCustomValueLength/Length_8
+=== RUN   TestGeneratorCustomValueLength/Length_16
+=== RUN   TestGeneratorCustomValueLength/Length_32
+=== RUN   TestGeneratorCustomValueLength/Length_64
+--- PASS: TestGeneratorCustomValueLength (0.00s)
+    --- PASS: TestGeneratorCustomValueLength/Length_8 (0.00s)
+    --- PASS: TestGeneratorCustomValueLength/Length_16 (0.00s)
+    --- PASS: TestGeneratorCustomValueLength/Length_32 (0.00s)
+    --- PASS: TestGeneratorCustomValueLength/Length_64 (0.00s)
+=== RUN   TestGeneratorCustomCharset
+=== RUN   TestGeneratorCustomCharset/alphanumeric
+=== RUN   TestGeneratorCustomCharset/alphabetic
+=== RUN   TestGeneratorCustomCharset/uppercase
+=== RUN   TestGeneratorCustomCharset/lowercase
+=== RUN   TestGeneratorCustomCharset/numeric
+--- PASS: TestGeneratorCustomCharset (0.00s)
+    --- PASS: TestGeneratorCustomCharset/alphanumeric (0.00s)
+    --- PASS: TestGeneratorCustomCharset/alphabetic (0.00s)
+    --- PASS: TestGeneratorCustomCharset/uppercase (0.00s)
+    --- PASS: TestGeneratorCustomCharset/lowercase (0.00s)
+    --- PASS: TestGeneratorCustomCharset/numeric (0.00s)
+=== RUN   TestFieldValidation
+=== RUN   TestFieldValidation/Valid_string
+=== RUN   TestFieldValidation/Empty_string
+=== RUN   TestFieldValidation/Valid_integer
+=== RUN   TestFieldValidation/Valid_negative_integer
+=== RUN   TestFieldValidation/Invalid_integer_(float)
+=== RUN   TestFieldValidation/Invalid_integer_(text)
+=== RUN   TestFieldValidation/Invalid_integer_(mixed)
+=== RUN   TestFieldValidation/Valid_boolean_(true)
+=== RUN   TestFieldValidation/Valid_boolean_(false)
+=== RUN   TestFieldValidation/Valid_boolean_(yes)
+=== RUN   TestFieldValidation/Valid_boolean_(no)
+=== RUN   TestFieldValidation/Valid_boolean_(1)
+=== RUN   TestFieldValidation/Valid_boolean_(0)
+=== RUN   TestFieldValidation/Invalid_boolean
+=== RUN   TestFieldValidation/Valid_float
+=== RUN   TestFieldValidation/Valid_float_(integer)
+=== RUN   TestFieldValidation/Valid_float_(negative)
+=== RUN   TestFieldValidation/Invalid_float
+=== RUN   TestFieldValidation/Invalid_float_(mixed)
+=== RUN   TestFieldValidation/Valid_URL_(http)
+=== RUN   TestFieldValidation/Valid_URL_(https)
+=== RUN   TestFieldValidation/Invalid_URL_(no_protocol)
+=== RUN   TestFieldValidation/Invalid_URL_(wrong_protocol)
+=== RUN   TestFieldValidation/Valid_email
+=== RUN   TestFieldValidation/Valid_email_(subdomain)
+=== RUN   TestFieldValidation/Invalid_email_(no_@)
+=== RUN   TestFieldValidation/Invalid_email_(no_domain)
+=== RUN   TestFieldValidation/Invalid_email_(spaces)
+=== RUN   TestFieldValidation/Valid_IP
+=== RUN   TestFieldValidation/Valid_IP_(zeros)
+=== RUN   TestFieldValidation/Valid_IP_(max)
+=== RUN   TestFieldValidation/Invalid_IP_(out_of_range)
+=== RUN   TestFieldValidation/Invalid_IP_(wrong_format)
+=== RUN   TestFieldValidation/Invalid_IP_(letters)
+--- PASS: TestFieldValidation (0.00s)
+    --- PASS: TestFieldValidation/Valid_string (0.00s)
+    --- PASS: TestFieldValidation/Empty_string (0.00s)
+    --- PASS: TestFieldValidation/Valid_integer (0.00s)
+    --- PASS: TestFieldValidation/Valid_negative_integer (0.00s)
+    --- PASS: TestFieldValidation/Invalid_integer_(float) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_integer_(text) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_integer_(mixed) (0.00s)
+    --- PASS: TestFieldValidation/Valid_boolean_(true) (0.00s)
+    --- PASS: TestFieldValidation/Valid_boolean_(false) (0.00s)
+    --- PASS: TestFieldValidation/Valid_boolean_(yes) (0.00s)
+    --- PASS: TestFieldValidation/Valid_boolean_(no) (0.00s)
+    --- PASS: TestFieldValidation/Valid_boolean_(1) (0.00s)
+    --- PASS: TestFieldValidation/Valid_boolean_(0) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_boolean (0.00s)
+    --- PASS: TestFieldValidation/Valid_float (0.00s)
+    --- PASS: TestFieldValidation/Valid_float_(integer) (0.00s)
+    --- PASS: TestFieldValidation/Valid_float_(negative) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_float (0.00s)
+    --- PASS: TestFieldValidation/Invalid_float_(mixed) (0.00s)
+    --- PASS: TestFieldValidation/Valid_URL_(http) (0.00s)
+    --- PASS: TestFieldValidation/Valid_URL_(https) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_URL_(no_protocol) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_URL_(wrong_protocol) (0.00s)
+    --- PASS: TestFieldValidation/Valid_email (0.00s)
+    --- PASS: TestFieldValidation/Valid_email_(subdomain) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_email_(no_@) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_email_(no_domain) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_email_(spaces) (0.00s)
+    --- PASS: TestFieldValidation/Valid_IP (0.00s)
+    --- PASS: TestFieldValidation/Valid_IP_(zeros) (0.00s)
+    --- PASS: TestFieldValidation/Valid_IP_(max) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_IP_(out_of_range) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_IP_(wrong_format) (0.00s)
+    --- PASS: TestFieldValidation/Invalid_IP_(letters) (0.00s)
+=== RUN   TestNormalizeFieldValue
+=== RUN   TestNormalizeFieldValue/Boolean_yes
+=== RUN   TestNormalizeFieldValue/Boolean_1
+=== RUN   TestNormalizeFieldValue/Boolean_no
+=== RUN   TestNormalizeFieldValue/Boolean_0
+=== RUN   TestNormalizeFieldValue/Boolean_true
+=== RUN   TestNormalizeFieldValue/Boolean_false
+=== RUN   TestNormalizeFieldValue/Non-boolean
+=== RUN   TestNormalizeFieldValue/Empty_string
+=== RUN   TestNormalizeFieldValue/Whitespace
+--- PASS: TestNormalizeFieldValue (0.00s)
+    --- PASS: TestNormalizeFieldValue/Boolean_yes (0.00s)
+    --- PASS: TestNormalizeFieldValue/Boolean_1 (0.00s)
+    --- PASS: TestNormalizeFieldValue/Boolean_no (0.00s)
+    --- PASS: TestNormalizeFieldValue/Boolean_0 (0.00s)
+    --- PASS: TestNormalizeFieldValue/Boolean_true (0.00s)
+    --- PASS: TestNormalizeFieldValue/Boolean_false (0.00s)
+    --- PASS: TestNormalizeFieldValue/Non-boolean (0.00s)
+    --- PASS: TestNormalizeFieldValue/Empty_string (0.00s)
+    --- PASS: TestNormalizeFieldValue/Whitespace (0.00s)
+=== RUN   TestParseTemplateMetadata
+--- PASS: TestParseTemplateMetadata (0.00s)
+=== RUN   TestGenerateValueForField
+    generator_test.go:747: Successfully generated IP value: 10.255.255.254
+    generator_test.go:762: Successfully generated IPv4 value: 10.255.255.254
+--- PASS: TestGenerateValueForField (0.00s)
+=== RUN   TestProcessTemplateWithIPFields
+    generator_test.go:835: Generated content: # Database config
+        DB_HOST=m9Pc65V2jCZZWC97
+        
+        # @server_ip [required] (ip) Server IP address
+        SERVER_IP=10.255.255.254
+        
+        # @server_ipv4 [required] (ipv4) Server IPv4 address
+        SERVER_IPV4=10.255.255.254
+        
+        # @server_ipv6 [optional] (ipv6) Server IPv6 address
+        SERVER_IPV6=YHHcXXhT3PtlYg7x
+    generator_test.go:843: IP value: 10.255.255.254
+    generator_test.go:851: IPv4 value: 10.255.255.254
+    generator_test.go:858: IPv6 value: YHHcXXhT3PtlYg7x
+--- PASS: TestProcessTemplateWithIPFields (0.00s)
+=== RUN   TestIPFieldValidation
+--- PASS: TestIPFieldValidation (0.00s)
+PASS
+ok  	github.com/yashikota/genenv/pkg/generator	(cached)
+=== RUN   TestLocalIP
+    myip_test.go:14: Got IPv4: 10.255.255.254
+    myip_test.go:24: Failed to get IPv6 (this might be normal if your system doesn't have IPv6): no private IPv6 address found
+    myip_test.go:37: Got IP: 10.255.255.254
+--- PASS: TestLocalIP (0.00s)
+=== RUN   TestIsPrivateIP
+--- PASS: TestIsPrivateIP (0.00s)
+PASS
+ok  	github.com/yashikota/genenv/pkg/network	(cached)
+=== RUN   TestTemplate
+--- PASS: TestTemplate (0.00s)
+=== RUN   TestTemplateContent
+--- PASS: TestTemplateContent (0.00s)
+PASS
+ok  	github.com/yashikota/genenv/pkg/template	(cached)
+=== RUN   TestValidation
+=== RUN   TestValidation/Required_string_field_-_valid
+=== RUN   TestValidation/Required_string_field_-_empty
+=== RUN   TestValidation/Optional_string_field_-_empty
+=== RUN   TestValidation/String_field_with_pattern_-_valid
+=== RUN   TestValidation/String_field_with_pattern_-_invalid
+=== RUN   TestValidation/Integer_field_-_valid
+=== RUN   TestValidation/Integer_field_-_invalid
+=== RUN   TestValidation/Integer_field_with_range_-_valid
+=== RUN   TestValidation/Integer_field_with_range_-_out_of_range
+=== RUN   TestValidation/Boolean_field_-_valid
+=== RUN   TestValidation/Boolean_field_-_invalid
+=== RUN   TestValidation/Float_field_-_valid
+=== RUN   TestValidation/Float_field_-_invalid
+=== RUN   TestValidation/URL_field_-_valid
+=== RUN   TestValidation/URL_field_-_invalid
+=== RUN   TestValidation/URL_field_-_valid_with_path
+=== RUN   TestValidation/URL_field_-_valid_with_query
+=== RUN   TestValidation/URL_field_-_valid_with_fragment
+=== RUN   TestValidation/Email_field_-_valid
+=== RUN   TestValidation/Email_field_-_invalid
+=== RUN   TestValidation/IP_field_-_valid
+=== RUN   TestValidation/IP_field_-_invalid
+=== RUN   TestValidation/IPv4_field_-_valid
+=== RUN   TestValidation/IPv4_field_-_invalid
+=== RUN   TestValidation/IPv6_field_-_valid
+=== RUN   TestValidation/IPv6_field_-_invalid
+--- PASS: TestValidation (0.00s)
+    --- PASS: TestValidation/Required_string_field_-_valid (0.00s)
+    --- PASS: TestValidation/Required_string_field_-_empty (0.00s)
+    --- PASS: TestValidation/Optional_string_field_-_empty (0.00s)
+    --- PASS: TestValidation/String_field_with_pattern_-_valid (0.00s)
+    --- PASS: TestValidation/String_field_with_pattern_-_invalid (0.00s)
+    --- PASS: TestValidation/Integer_field_-_valid (0.00s)
+    --- PASS: TestValidation/Integer_field_-_invalid (0.00s)
+    --- PASS: TestValidation/Integer_field_with_range_-_valid (0.00s)
+    --- PASS: TestValidation/Integer_field_with_range_-_out_of_range (0.00s)
+    --- PASS: TestValidation/Boolean_field_-_valid (0.00s)
+    --- PASS: TestValidation/Boolean_field_-_invalid (0.00s)
+    --- PASS: TestValidation/Float_field_-_valid (0.00s)
+    --- PASS: TestValidation/Float_field_-_invalid (0.00s)
+    --- PASS: TestValidation/URL_field_-_valid (0.00s)
+    --- PASS: TestValidation/URL_field_-_invalid (0.00s)
+    --- PASS: TestValidation/URL_field_-_valid_with_path (0.00s)
+    --- PASS: TestValidation/URL_field_-_valid_with_query (0.00s)
+    --- PASS: TestValidation/URL_field_-_valid_with_fragment (0.00s)
+    --- PASS: TestValidation/Email_field_-_valid (0.00s)
+    --- PASS: TestValidation/Email_field_-_invalid (0.00s)
+    --- PASS: TestValidation/IP_field_-_valid (0.00s)
+    --- PASS: TestValidation/IP_field_-_invalid (0.00s)
+    --- PASS: TestValidation/IPv4_field_-_valid (0.00s)
+    --- PASS: TestValidation/IPv4_field_-_invalid (0.00s)
+    --- PASS: TestValidation/IPv6_field_-_valid (0.00s)
+    --- PASS: TestValidation/IPv6_field_-_invalid (0.00s)
+PASS
+ok  	github.com/yashikota/genenv/pkg/validation	(cached)
+FAIL
