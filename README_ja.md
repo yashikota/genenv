@@ -17,6 +17,7 @@
 - 既存の`.env`ファイルと比較して新しいフィールドのみを追加する機能
 - `.env`ファイルに既に存在するフィールドをスキップするオプション
 - テンプレートなしで新しい`.env`ファイルを最初から作成する機能
+- ローカルIPアドレス（IPv4およびIPv6）の自動検出と挿入
 
 ## サンプル例
 
@@ -25,6 +26,7 @@
 - **Basic**: 基本的なプレースホルダーの置き換え
 - **With Metadata**: フィールドのメタデータと検証
 - **With Types**: フィールドタイプの検証
+- **Auto IP**: ローカルIPアドレスの自動検出と挿入
 - **Complex**: 複雑な場合の例
 - **Escaped Placeholders**: リテラル`${...}`構文の保持
 - **Compare with Existing**: 既存の`.env`ファイルへの新しいフィールドの追加
@@ -185,6 +187,7 @@ genenvは、生成される値に対して以下の文字セットをサポー�
    - フィールドの型（string、int、boolなど）
    - デフォルト値（利用可能な場合）
    - 現在の値（現在の.envファイルに存在する場合）
+   - IPフィールドの場合、検出されたIPアドレス（利用可能な場合）
 
 インタラクティブモードの例：
 
@@ -217,6 +220,8 @@ DB_PASSWORD (データベースパスワード, [REQUIRED], type: string):
 Generated random value: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 API_KEY (外部サービス用APIキー, [REQUIRED], type: string): 
 Generated random value: q7w8e9r0t1y2u3i4o5p6a7s8d9f0g1h2
+SERVER_IP (サーバーIPアドレス, [REQUIRED], type: ip) (検出: 192.168.1.100): 
+検出されたIPを使用: 192.168.1.100
 
 Successfully generated .env from .env.example
 ```
@@ -267,7 +272,9 @@ DEBUG=${debug_mode}
 - `float`/`double`: 浮動小数点値
 - `url`: URL値（`http://`または`https://`で始まる必要があります）
 - `email`: メールアドレス
-- `ip`: IPv4アドレス
+- `ip`: IPv4またはIPv6アドレス（ネットワークから自動検出）
+- `ipv4`: IPv4アドレスのみ（ネットワークから自動検出）
+- `ipv6`: IPv6アドレスのみ（ネットワークから自動検出）
 
 インタラクティブモードで実行すると、ツールはフィールドタイプに基づいて入力を検証し、フィールドの説明と共に適切なプロンプトを表示します。
 

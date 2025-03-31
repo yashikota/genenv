@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"net"
 	"strconv"
 	"strings"
 )
@@ -29,18 +30,17 @@ func ValidateFieldValue(input string, fieldType string) bool {
 		// Simple email validation
 		return strings.Contains(input, "@") && strings.Contains(input, ".") && !strings.Contains(input, " ")
 	case "ip":
-		// Simple IP validation
-		parts := strings.Split(input, ".")
-		if len(parts) != 4 {
-			return false
-		}
-		for _, part := range parts {
-			num, err := strconv.Atoi(part)
-			if err != nil || num < 0 || num > 255 {
-				return false
-			}
-		}
-		return true
+		// Validate both IPv4 and IPv6
+		ip := net.ParseIP(input)
+		return ip != nil
+	case "ipv4":
+		// Validate IPv4 only
+		ip := net.ParseIP(input)
+		return ip != nil && ip.To4() != nil
+	case "ipv6":
+		// Validate IPv6 only
+		ip := net.ParseIP(input)
+		return ip != nil && ip.To4() == nil
 	default:
 		return true // Default to valid for unknown types
 	}

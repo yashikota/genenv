@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
+
+	"github.com/yashikota/genenv/pkg/network"
 )
 
 // CharsetType defines the type of character set to use for random values
@@ -120,6 +121,9 @@ func (g *Generator) readTemplateFile() ([]string, error) {
 
 // processTemplateLines processes template lines and replaces placeholders
 func (g *Generator) processTemplateLines(lines []string, existingValues map[string]string) ([]string, error) {
+	// Parse template metadata to get field types
+	fields, _ := g.ParseTemplateMetadata()
+
 	// Keep track of generated values to ensure they're different
 	generatedValues := make(map[string]string)
 
@@ -160,9 +164,16 @@ func (g *Generator) processTemplateLines(lines []string, existingValues map[stri
 					// Use existing value
 					generatedValues[placeholderName] = existingValue
 				} else {
-					// Generate a secure random value if not already generated
+					// Generate a value if not already generated
 					if _, exists := generatedValues[placeholderName]; !exists {
-						secureValue, err := g.generateSecureValue()
+						// Check if field has a specific type
+						fieldType := "string"
+						if field, exists := fields[placeholderName]; exists && field.Type != "" {
+							fieldType = field.Type
+						}
+
+						// Generate value based on field type
+						secureValue, err := g.generateValueForField(fieldType)
 						if err != nil {
 							return nil, err
 						}
@@ -237,6 +248,40 @@ func (g *Generator) generateSecureValue() (string, error) {
 	}
 
 	return string(result), nil
+}
+
+// generateValueForField generates a value for a field based on its type
+func (g *Generator) generateValueForField(fieldType string) (string, error) {
+	// For IP types, try to get the actual IP address
+	switch fieldType {
+	case "ip":
+		// Get any IP (prefer IPv4)
+		ip, err := network.LocalIP(network.IPAny)
+		if err == nil {
+			return ip.String(), nil
+		}
+		// Fallback to generate a random value
+		return g.generateSecureValue()
+	case "ipv4":
+		// Get IPv4 address
+		ip, err := network.LocalIP(network.IPv4)
+		if err == nil {
+			return ip.String(), nil
+		}
+		// Fallback to generate a random value
+		return g.generateSecureValue()
+	case "ipv6":
+		// Get IPv6 address
+		ip, err := network.LocalIP(network.IPv6)
+		if err == nil {
+			return ip.String(), nil
+		}
+		// Fallback to generate a random value
+		return g.generateSecureValue()
+	default:
+		// For all other types, generate a secure random value
+		return g.generateSecureValue()
+	}
 }
 
 // getCharset returns the appropriate character set based on the CharsetType
@@ -324,6 +369,8 @@ func (g *Generator) ParseTemplateMetadata() (map[string]TemplateField, error) {
 				"url":    true,
 				"email":  true,
 				"ip":     true,
+				"ipv4":   true,
+				"ipv6":   true,
 			}
 
 			if !validTypes[currentField.Type] {
@@ -473,60 +520,7 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 			return input, true // Empty input is valid, will use default later
 		}
 
-		switch fieldType {
-		case "int", "integer":
-			_, err := strconv.Atoi(input)
-			if err != nil {
-				fmt.Printf("Invalid integer value. Please enter a valid number.\n")
-				return input, false
-			}
-		case "bool", "boolean":
-			lower := strings.ToLower(input)
-			if lower != "true" && lower != "false" && lower != "1" && lower != "0" && lower != "yes" && lower != "no" {
-				fmt.Printf("Invalid boolean value. Please enter true/false, yes/no, or 1/0.\n")
-				return input, false
-			}
-			// Normalize boolean values
-			if lower == "1" || lower == "yes" {
-				return "true", true
-			} else if lower == "0" || lower == "no" {
-				return "false", true
-			}
-		case "float", "double":
-			_, err := strconv.ParseFloat(input, 64)
-			if err != nil {
-				fmt.Printf("Invalid float value. Please enter a valid number.\n")
-				return input, false
-			}
-		case "url":
-			// Simple URL validation
-			if !strings.HasPrefix(input, "http://") && !strings.HasPrefix(input, "https://") {
-				fmt.Printf("Invalid URL. URL should start with http:// or https://\n")
-				return input, false
-			}
-		case "email":
-			// Simple email validation
-			if !strings.Contains(input, "@") || !strings.Contains(input, ".") {
-				fmt.Printf("Invalid email address. Please enter a valid email.\n")
-				return input, false
-			}
-		case "ip":
-			// Simple IP validation
-			parts := strings.Split(input, ".")
-			if len(parts) != 4 {
-				fmt.Printf("Invalid IP address. Please enter a valid IPv4 address.\n")
-				return input, false
-			}
-			for _, part := range parts {
-				num, err := strconv.Atoi(part)
-				if err != nil || num < 0 || num > 255 {
-					fmt.Printf("Invalid IP address. Each octet must be between 0 and 255.\n")
-					return input, false
-				}
-			}
-		}
-
-		return input, true
+		return input, ValidateFieldValue(input, fieldType)
 	}
 
 	for _, line := range lines {
@@ -610,6 +604,28 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 						prompt += fmt.Sprintf(", current: %s", existingValue)
 					}
 
+					// For IP fields, suggest auto-detection
+					var suggestIP string
+					if hasMetadata {
+						switch field.Type {
+						case "ip":
+							if ip, err := network.LocalIP(network.IPAny); err == nil {
+								suggestIP = ip.String()
+								prompt += fmt.Sprintf(" (detected: %s)", suggestIP)
+							}
+						case "ipv4":
+							if ip, err := network.LocalIP(network.IPv4); err == nil {
+								suggestIP = ip.String()
+								prompt += fmt.Sprintf(" (detected: %s)", suggestIP)
+							}
+						case "ipv6":
+							if ip, err := network.LocalIP(network.IPv6); err == nil {
+								suggestIP = ip.String()
+								prompt += fmt.Sprintf(" (detected: %s)", suggestIP)
+							}
+						}
+					}
+
 					prompt += ": "
 
 					// Loop until valid input is provided
@@ -622,8 +638,15 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 
 						fieldValue = strings.TrimSpace(input)
 
+						// Use detected IP if input is empty and we have a suggested IP
+						if fieldValue == "" && suggestIP != "" {
+							fieldValue = suggestIP
+							fmt.Printf("Using detected IP: %s\n", fieldValue)
+							break
+						}
+
 						// Validate input based on field type
-						if hasMetadata && field.Type != "" && field.Type != "string" {
+						if hasMetadata && field.Type != "" {
 							validatedValue, isValid := validateInput(fieldValue, field.Type)
 							if !isValid {
 								continue
@@ -644,22 +667,34 @@ func (g *Generator) processTemplateInteractively(lines []string, fields map[stri
 								fmt.Println("This field is required. Please enter a value.")
 								continue
 							} else {
-								// Generate a value if empty and not required
-								secureValue, err := g.generateSecureValue()
+								// Generate a value based on field type
+								fieldType := "string"
+								if hasMetadata {
+									fieldType = field.Type
+								}
+
+								secureValue, err := g.generateValueForField(fieldType)
 								if err != nil {
 									return nil, err
 								}
 								fieldValue = secureValue
-								fmt.Printf("Generated random value: %s\n", fieldValue)
+								fmt.Printf("Generated value: %s\n", fieldValue)
 							}
 						}
 
 						break
 					}
 				} else {
-					// Generate a secure random value if not already generated
+					// Generate a value if not already generated
 					if _, exists := generatedValues[placeholderName]; !exists {
-						secureValue, err := g.generateSecureValue()
+						// Determine field type
+						fieldType := "string"
+						if hasMetadata && field.Type != "" {
+							fieldType = field.Type
+						}
+
+						// Generate value based on field type
+						secureValue, err := g.generateValueForField(fieldType)
 						if err != nil {
 							return nil, err
 						}

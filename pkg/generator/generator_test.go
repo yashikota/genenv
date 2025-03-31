@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -714,5 +715,173 @@ SIMPLE_VALUE=${simple_value}
 	// Check that there are no unexpected fields
 	if len(fields) != len(expectedFields) {
 		t.Errorf("Expected %d fields, got %d", len(expectedFields), len(fields))
+	}
+}
+
+// TestGenerateValueForField tests the generation of values based on field type
+func TestGenerateValueForField(t *testing.T) {
+	g := New(Config{
+		ValueLength: 10,
+		Charset:     CharsetAlphanumeric,
+	})
+
+	// Test string type (should generate random string)
+	value, err := g.generateValueForField("string")
+	if err != nil {
+		t.Errorf("Error generating string value: %v", err)
+	}
+	if len(value) != 10 {
+		t.Errorf("Expected string value length of 10, got %d: %s", len(value), value)
+	}
+
+	// Test IP type (should get local IP if possible)
+	value, err = g.generateValueForField("ip")
+	if err != nil {
+		t.Errorf("Error generating IP value: %v", err)
+	}
+
+	ip := net.ParseIP(value)
+	// If we were able to get a local IP, the value should be a valid IP
+	// If not, it should be a random string of length 10
+	if ip != nil {
+		t.Logf("Successfully generated IP value: %s", value)
+	} else if len(value) != 10 {
+		t.Errorf("Expected fallback to random string of length 10, got %d: %s", len(value), value)
+	}
+
+	// Test IPv4 type
+	value, err = g.generateValueForField("ipv4")
+	if err != nil {
+		t.Errorf("Error generating IPv4 value: %v", err)
+	}
+
+	ip = net.ParseIP(value)
+	// If we were able to get a local IPv4, the value should be a valid IPv4
+	// If not, it should be a random string of length 10
+	if ip != nil && ip.To4() != nil {
+		t.Logf("Successfully generated IPv4 value: %s", value)
+	} else if len(value) != 10 {
+		t.Errorf("Expected fallback to random string of length 10, got %d: %s", len(value), value)
+	}
+
+	// Test IPv6 type (may not be available on all systems)
+	value, err = g.generateValueForField("ipv6")
+	if err != nil {
+		t.Errorf("Error generating IPv6 value: %v", err)
+	}
+
+	ip = net.ParseIP(value)
+	// If we were able to get a local IPv6, the value should be a valid IPv6
+	// If not, it should be a random string of length 10
+	if ip != nil && ip.To4() == nil {
+		t.Logf("Successfully generated IPv6 value: %s", value)
+	} else if len(value) != 10 {
+		t.Errorf("Expected fallback to random string of length 10, got %d: %s", len(value), value)
+	}
+}
+
+// TestProcessTemplateWithIPFields tests processing a template with IP fields
+func TestProcessTemplateWithIPFields(t *testing.T) {
+	// Create temp dir for test files
+	tempDir, err := os.MkdirTemp("", "genenv-test-ip")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create template with IP fields
+	templateContent := `# Database config
+DB_HOST=${db_host}
+
+# @server_ip [required] (ip) Server IP address
+SERVER_IP=${server_ip}
+
+# @server_ipv4 [required] (ipv4) Server IPv4 address
+SERVER_IPV4=${server_ipv4}
+
+# @server_ipv6 [optional] (ipv6) Server IPv6 address
+SERVER_IPV6=${server_ipv6}
+`
+
+	templatePath := filepath.Join(tempDir, ".env.example")
+	err = os.WriteFile(templatePath, []byte(templateContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write template file: %v", err)
+	}
+
+	outputPath := filepath.Join(tempDir, ".env")
+
+	g := New(Config{
+		TemplatePath: templatePath,
+		OutputPath:   outputPath,
+		Force:        true,
+		ValueLength:  16,
+		Charset:      CharsetAlphanumeric,
+	})
+
+	// Run the generator
+	err = g.Generate()
+	if err != nil {
+		t.Fatalf("Failed to generate .env file: %v", err)
+	}
+
+	// Read the generated file
+	generated, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("Failed to read generated file: %v", err)
+	}
+
+	content := string(generated)
+	t.Logf("Generated content: %s", content)
+
+	// Check that IP fields were populated
+	ipv4Regex := regexp.MustCompile(`SERVER_IP=(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\S{16})`)
+	ipv4Match := ipv4Regex.FindStringSubmatch(content)
+	if ipv4Match == nil {
+		t.Errorf("IP field not populated correctly")
+	} else {
+		t.Logf("IP value: %s", ipv4Match[1])
+	}
+
+	ipv4OnlyRegex := regexp.MustCompile(`SERVER_IPV4=(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\S{16})`)
+	ipv4OnlyMatch := ipv4OnlyRegex.FindStringSubmatch(content)
+	if ipv4OnlyMatch == nil {
+		t.Errorf("IPv4 field not populated correctly")
+	} else {
+		t.Logf("IPv4 value: %s", ipv4OnlyMatch[1])
+	}
+
+	// IPv6 might not be available in all environments
+	ipv6Regex := regexp.MustCompile(`SERVER_IPV6=([0-9a-f:]+|\S{16})`)
+	ipv6Match := ipv6Regex.FindStringSubmatch(content)
+	if ipv6Match != nil {
+		t.Logf("IPv6 value: %s", ipv6Match[1])
+	}
+}
+
+// TestIPFieldValidation tests validation of IP field values
+func TestIPFieldValidation(t *testing.T) {
+	testCases := []struct {
+		input     string
+		fieldType string
+		valid     bool
+	}{
+		{"192.168.1.1", "ip", true},
+		{"2001:db8::1", "ip", true},
+		{"invalid-ip", "ip", false},
+		{"192.168.1.1", "ipv4", true},
+		{"2001:db8::1", "ipv4", false},
+		{"invalid-ip", "ipv4", false},
+		{"192.168.1.1", "ipv6", false},
+		{"2001:db8::1", "ipv6", true},
+		{"invalid-ip", "ipv6", false},
+	}
+
+	for _, tc := range testCases {
+		valid := ValidateFieldValue(tc.input, tc.fieldType)
+		if valid != tc.valid {
+			t.Errorf("ValidateFieldValue(%q, %q) = %v, expected %v",
+				tc.input, tc.fieldType, valid, tc.valid)
+		}
 	}
 }

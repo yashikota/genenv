@@ -17,6 +17,7 @@ A simple CLI tool to generate `.env` files from template files, automatically fi
 - Support for comparing with existing `.env` files and adding only new fields
 - Option to skip fields that already exist in the `.env` file
 - Create a new `.env` file from scratch without a template
+- Automatic detection and insertion of local IP addresses (IPv4 and IPv6)
 
 ## Examples
 
@@ -25,6 +26,7 @@ The `examples` directory contains various examples demonstrating the features of
 - **Basic**: Simple placeholder replacement
 - **With Metadata**: Field metadata and validation
 - **With Types**: Field type validation
+- **Auto IP**: Automatic detection and insertion of local IP addresses
 - **Complex**: Comprehensive real-world example
 - **Escaped Placeholders**: Preserving literal `${...}` syntax
 - **Compare with Existing**: Adding new fields to existing `.env` files
@@ -187,6 +189,7 @@ Running `genenv` without any arguments or with the `-I/--interactive` flag will 
    - Field type (string, int, bool, etc.)
    - Default value (if available)
    - Current value (if exists in the current .env file)
+   - For IP fields, the detected IP address (if available)
 
 Example of interactive mode:
 
@@ -219,6 +222,8 @@ DB_PASSWORD (Database password, [REQUIRED], type: string):
 Generated random value: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 API_KEY (API key for external service, [REQUIRED], type: string): 
 Generated random value: q7w8e9r0t1y2u3i4o5p6a7s8d9f0g1h2
+SERVER_IP (Server IP address, [REQUIRED], type: ip) (detected: 192.168.1.100): 
+Using detected IP: 192.168.1.100
 
 Successfully generated .env from .env.example
 ```
@@ -238,6 +243,28 @@ This will create a temporary template with common environment variables and guid
 - Application configuration (environment, debug mode, log level, secret key)
 
 You can also run `genenv` without arguments and choose to create a new file from scratch when prompted.
+
+### Automatic IP Address Detection
+
+When using fields with the types `ip`, `ipv4`, or `ipv6`, genenv will automatically detect your local IP addresses and insert them:
+
+```txt
+# @server_ip [required] (ip) Server IP address
+SERVER_IP=${server_ip}
+
+# @server_ipv4 [required] (ipv4) Server IPv4 address
+SERVER_IPV4=${server_ipv4}
+
+# @server_ipv6 [optional] (ipv6) Server IPv6 address
+SERVER_IPV6=${server_ipv6}
+```
+
+In the resulting .env file:
+- `${server_ip}` will be replaced with your detected IP address (preferring IPv4)
+- `${server_ipv4}` will be replaced with your detected IPv4 address
+- `${server_ipv6}` will be replaced with your detected IPv6 address (if available)
+
+In interactive mode, detected IPs are suggested as defaults so you can just press Enter to use them.
 
 ### Template Metadata Format
 
@@ -269,7 +296,9 @@ Supported field types:
 - `float`/`double`: Floating point value
 - `url`: URL value (must start with http:// or https://)
 - `email`: Email address
-- `ip`: IPv4 address
+- `ip`: IPv4 or IPv6 address (auto-detected from your network)
+- `ipv4`: IPv4 address only (auto-detected from your network)
+- `ipv6`: IPv6 address only (auto-detected from your network)
 
 When running in interactive mode, the tool will validate input based on the field type and show appropriate prompts with the field description.
 
