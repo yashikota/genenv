@@ -13,7 +13,7 @@ import (
 
 // Version information
 const (
-	Version = "0.4.1"
+	Version = "0.5.0"
 )
 
 // Define custom flag types to support both short and long options
@@ -96,6 +96,8 @@ func main() {
 	var interactiveFlag boolFlag
 	var compareWithEnvFlag boolFlag
 	var skipExistingFlag boolFlag
+	var yesFlag boolFlag
+	var noFlag boolFlag
 
 	// Register both short and long versions of flags
 	flag.Var(&forceFlag, "force", "Force overwrite of existing .env file")
@@ -130,6 +132,12 @@ func main() {
 
 	flag.Var(&skipExistingFlag, "skip-existing", "Skip fields that already exist in the .env file")
 	flag.Var(&skipExistingFlag, "S", "Skip fields that already exist in the .env file")
+
+	flag.Var(&yesFlag, "yes", "Automatically answer yes to all prompts")
+	flag.Var(&yesFlag, "y", "Automatically answer yes to all prompts")
+
+	flag.Var(&noFlag, "no", "Automatically answer no to all prompts")
+	flag.Var(&noFlag, "n", "Automatically answer no to all prompts")
 
 	// Custom usage function
 	oldUsage := flag.Usage
@@ -328,23 +336,33 @@ func main() {
 
 	// Check if output file exists and prompt for confirmation if not forced
 	if _, err := os.Stat(config.OutputPath); err == nil && !config.Force {
-		fmt.Printf("File %s already exists. Overwrite? (y/N): ", config.OutputPath)
-		reader := bufio.NewReader(os.Stdin)
-		response, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Printf("Error reading input: %v\n", err)
-			os.Exit(1)
-		}
-
-		response = strings.TrimSpace(strings.ToLower(response))
-		if response != "y" && response != "yes" {
+		if yesFlag.set && yesFlag.value {
+			// Automatically answer yes
+			config.Force = true
+			gen = generator.New(config)
+		} else if noFlag.set && noFlag.value {
+			// Automatically answer no
 			fmt.Println("Operation cancelled")
 			os.Exit(0)
-		}
+		} else {
+			fmt.Printf("File %s already exists. Overwrite? (y/N): ", config.OutputPath)
+			reader := bufio.NewReader(os.Stdin)
+			response, err := reader.ReadString('\n')
+			if err != nil {
+				fmt.Printf("Error reading input: %v\n", err)
+				os.Exit(1)
+			}
 
-		// Set force to true to skip the check in the generator
-		config.Force = true
-		gen = generator.New(config)
+			response = strings.TrimSpace(strings.ToLower(response))
+			if response != "y" && response != "yes" {
+				fmt.Println("Operation cancelled")
+				os.Exit(0)
+			}
+
+			// Set force to true to skip the check in the generator
+			config.Force = true
+			gen = generator.New(config)
+		}
 	}
 
 	// Generate .env file

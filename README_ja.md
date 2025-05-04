@@ -102,7 +102,9 @@ genenv
   - 有効なオプション: `alphanumeric`, `alphabetic`, `uppercase`, `lowercase`, `numeric`
 - `-I, --interactive`: インタラクティブモードで実行し、値の入力を促す
 - `-C, --compare`: 既存の`.env`ファイルと比較して新しいフィールドのみを追加
-- `-S, --skip-existing`: `.env`ファイルに既に存在するフィールドをスキップ
+- `-S, --skip-existing`: 既に`.env`ファイルに存在するフィールドをスキップ
+- `-y, --yes`: すべてのプロンプトに対して自動的にyesと回答
+- `-n, --no`: すべてのプロンプトに対して自動的にnoと回答
 - `-h, --help`: ヘルプ情報を表示
 - `-v, --version`: バージョン情報を表示
 

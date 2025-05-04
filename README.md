@@ -103,6 +103,8 @@ This will start the interactive mode, prompting for all configuration options an
 - `-I, --interactive`: Run in interactive mode, prompting for values
 - `-C, --compare`: Compare with existing `.env` file and add only new fields
 - `-S, --skip-existing`: Skip fields that already exist in the `.env` file
+- `-y, --yes`: Automatically answer yes to all prompts
+- `-n, --no`: Automatically answer no to all prompts
 - `-h, --help`: Show help information
 - `-v, --version`: Show version information
 
