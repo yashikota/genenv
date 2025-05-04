@@ -16,7 +16,6 @@ A simple CLI tool to generate `.env` files from template files, automatically fi
 - Interactive mode with field validation and type checking
 - Support for comparing with existing `.env` files and adding only new fields
 - Option to skip fields that already exist in the `.env` file
-- Create a new `.env` file from scratch without a template
 - Automatic detection and insertion of local IP addresses (IPv4 and IPv6)
 
 ## Examples
@@ -31,7 +30,6 @@ The `examples` directory contains various examples demonstrating the features of
 - **Escaped Placeholders**: Preserving literal `${...}` syntax
 - **Compare with Existing**: Adding new fields to existing `.env` files
 - **Custom Character Sets**: Using different character sets and lengths
-- **New From Scratch**: Creating a new `.env` file without a template
 
 Each example includes:
 
@@ -94,14 +92,6 @@ genenv
 
 This will start the interactive mode, prompting for all configuration options and field values.
 
-Create a new `.env` file from scratch:
-
-```bash
-genenv -N
-```
-
-This will create a new `.env` file with common environment variables without requiring a template file.
-
 ### Options
 
 - `-f, --force`: Force overwrite of existing `.env` file
@@ -113,7 +103,6 @@ This will create a new `.env` file with common environment variables without req
 - `-I, --interactive`: Run in interactive mode, prompting for values
 - `-C, --compare`: Compare with existing `.env` file and add only new fields
 - `-S, --skip-existing`: Skip fields that already exist in the `.env` file
-- `-N, --new`: Create a new `.env` file from scratch without a template
 - `-h, --help`: Show help information
 - `-v, --version`: Show version information
 
@@ -227,22 +216,6 @@ Using detected IP: 192.168.1.100
 
 Successfully generated .env from .env.example
 ```
-
-### Creating a New .env File From Scratch
-
-You can create a new `.env` file from scratch without needing a template file using the `-N/--new` flag:
-
-```bash
-genenv -N
-```
-
-This will create a temporary template with common environment variables and guide you through filling them in interactively. The temporary template includes:
-
-- Database configuration (host, port, name, user, password)
-- API configuration (key, URL)
-- Application configuration (environment, debug mode, log level, secret key)
-
-You can also run `genenv` without arguments and choose to create a new file from scratch when prompted.
 
 ### Automatic IP Address Detection
 

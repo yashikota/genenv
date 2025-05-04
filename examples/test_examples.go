@@ -81,11 +81,6 @@ func main() {
 			description: "Custom character sets",
 			testFunc:    testCharsetExample,
 		},
-		{
-			name:        "new-from-scratch",
-			description: "Creating a new .env file",
-			testFunc:    testNewFromScratchExample,
-		},
 	}
 
 	// Run the tests
@@ -198,7 +193,6 @@ func validateTestEnvironment(examplesDir string) error {
 		"escaped",
 		"compare-existing",
 		"custom-charset",
-		"new-from-scratch",
 	}
 
 	// Check that each required example directory exists
@@ -800,70 +794,6 @@ func testCharsetExample(exampleDir, genenvPath string) TestResult {
 		Name:    "custom-charset",
 		Success: true,
 		Message: "Successfully tested all character sets and custom length",
-	}
-}
-
-// testNewFromScratchExample tests the new-from-scratch example
-func testNewFromScratchExample(exampleDir, genenvPath string) TestResult {
-	// Backup existing .env if it exists
-	envPath := filepath.Join(exampleDir, ".env")
-	backupPath := filepath.Join(exampleDir, ".env.backup")
-	if _, err := os.Stat(envPath); err == nil {
-		if err := os.Rename(envPath, backupPath); err != nil {
-			return TestResult{
-				Name:    "new-from-scratch",
-				Success: false,
-				Message: fmt.Sprintf("Failed to backup .env: %v", err),
-			}
-		}
-		defer os.Rename(backupPath, envPath) // Restore backup after test
-	}
-
-	// Run genenv on the example with the template
-	templatePath := filepath.Join(exampleDir, ".env.example")
-	cmd := exec.Command(genenvPath, "-force", templatePath)
-	cmd.Dir = exampleDir // Set working directory to example directory
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return TestResult{
-			Name:    "new-from-scratch",
-			Success: false,
-			Message: fmt.Sprintf("Failed to run genenv: %v\nOutput: %s", err, output),
-		}
-	}
-
-	// Check if .env was created
-	if _, err := os.Stat(envPath); err != nil {
-		return TestResult{
-			Name:    "new-from-scratch",
-			Success: false,
-			Message: fmt.Sprintf(".env file was not created: %v", err),
-		}
-	}
-
-	// Read the generated .env file
-	envContent, err := os.ReadFile(envPath)
-	if err != nil {
-		return TestResult{
-			Name:    "new-from-scratch",
-			Success: false,
-			Message: fmt.Sprintf("Failed to read .env: %v", err),
-		}
-	}
-
-	// Check that placeholders were replaced
-	if strings.Contains(string(envContent), "${") {
-		return TestResult{
-			Name:    "new-from-scratch",
-			Success: false,
-			Message: "Placeholders were not replaced in the .env file",
-		}
-	}
-
-	return TestResult{
-		Name:    "new-from-scratch",
-		Success: true,
-		Message: "Successfully generated .env file from template",
 	}
 }
 
