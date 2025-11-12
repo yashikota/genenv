@@ -11,6 +11,7 @@
 *.dll
 *.so
 *.dylib
+genenv
 
 # Go workspace file
 go.work
