@@ -488,3 +488,239 @@ API_TOKEN=${api_token}
 		})
 	}
 }
+
+// TestGeneratorPreservesEnvStructure tests that existing .env structure is fully preserved
+func TestGeneratorPreservesEnvStructure(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "genenv-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create .env.example with some keys
+	templatePath := filepath.Join(tempDir, ".env.example")
+	templateContent := `# Template configuration
+DB_HOST=localhost
+DB_PASSWORD=${db_password}
+NEW_KEY=${new_key}`
+	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
+		t.Fatalf("Failed to write template file: %v", err)
+	}
+
+	// Create existing .env with custom structure
+	outputPath := filepath.Join(tempDir, ".env")
+	existingContent := `# My custom configuration
+# These are my personal settings
+DB_HOST=my-custom-host
+DB_PASSWORD=my-secret-password
+
+# Custom section
+CUSTOM_KEY=custom_value`
+	if err := os.WriteFile(outputPath, []byte(existingContent), 0644); err != nil {
+		t.Fatalf("Failed to write existing .env file: %v", err)
+	}
+
+	// Run generator
+	config := Config{
+		TemplatePath: templatePath,
+		OutputPath:   outputPath,
+		Force:        false,
+	}
+	gen := New(config)
+
+	if err := gen.Generate(); err != nil {
+		t.Fatalf("Failed to generate .env file: %v", err)
+	}
+
+	// Read the result
+	result, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("Failed to read generated file: %v", err)
+	}
+	resultStr := string(result)
+
+	// Verify that existing structure is preserved
+	if !strings.Contains(resultStr, "# My custom configuration") {
+		t.Error("Original comments were not preserved")
+	}
+	if !strings.Contains(resultStr, "# These are my personal settings") {
+		t.Error("Original comments were not preserved")
+	}
+	if !strings.Contains(resultStr, "DB_HOST=my-custom-host") {
+		t.Error("Original DB_HOST value was not preserved")
+	}
+	if !strings.Contains(resultStr, "DB_PASSWORD=my-secret-password") {
+		t.Error("Original DB_PASSWORD value was not preserved")
+	}
+	if !strings.Contains(resultStr, "CUSTOM_KEY=custom_value") {
+		t.Error("Custom key was not preserved")
+	}
+
+	// Verify that new key was added
+	envVars := parseEnvFile(resultStr)
+	if _, exists := envVars["NEW_KEY"]; !exists {
+		t.Error("NEW_KEY was not added from template")
+	}
+	if envVars["NEW_KEY"] == "${new_key}" {
+		t.Error("NEW_KEY placeholder was not replaced")
+	}
+}
+
+// TestGeneratorAddsCommentGroups tests that missing keys are added with their comment groups
+func TestGeneratorAddsCommentGroups(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "genenv-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create .env.example with comment groups
+	templatePath := filepath.Join(tempDir, ".env.example")
+	templateContent := `# Existing section
+EXISTING_KEY=value1
+
+# Database configuration
+# Connection settings for the database
+DB_HOST=localhost
+DB_PASSWORD=${db_password}
+
+# API configuration
+# External API settings
+API_KEY=${api_key}
+API_URL=https://api.example.com`
+	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
+		t.Fatalf("Failed to write template file: %v", err)
+	}
+
+	// Create existing .env with only one key
+	outputPath := filepath.Join(tempDir, ".env")
+	existingContent := `EXISTING_KEY=my_value`
+	if err := os.WriteFile(outputPath, []byte(existingContent), 0644); err != nil {
+		t.Fatalf("Failed to write existing .env file: %v", err)
+	}
+
+	// Run generator
+	config := Config{
+		TemplatePath: templatePath,
+		OutputPath:   outputPath,
+		Force:        false,
+	}
+	gen := New(config)
+
+	if err := gen.Generate(); err != nil {
+		t.Fatalf("Failed to generate .env file: %v", err)
+	}
+
+	// Read the result
+	result, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("Failed to read generated file: %v", err)
+	}
+	resultStr := string(result)
+
+	// Verify that existing key is preserved
+	if !strings.Contains(resultStr, "EXISTING_KEY=my_value") {
+		t.Error("Existing key was not preserved")
+	}
+
+	// Verify that comment groups were added
+	if !strings.Contains(resultStr, "# Database configuration") {
+		t.Error("Database comment group was not added")
+	}
+	if !strings.Contains(resultStr, "# Connection settings for the database") {
+		t.Error("Database comment group was not added")
+	}
+	if !strings.Contains(resultStr, "# API configuration") {
+		t.Error("API comment group was not added")
+	}
+	if !strings.Contains(resultStr, "# External API settings") {
+		t.Error("API comment group was not added")
+	}
+
+	// Verify that new keys were added
+	envVars := parseEnvFile(resultStr)
+	if _, exists := envVars["DB_HOST"]; !exists {
+		t.Error("DB_HOST was not added")
+	}
+	if _, exists := envVars["DB_PASSWORD"]; !exists {
+		t.Error("DB_PASSWORD was not added")
+	}
+	if _, exists := envVars["API_KEY"]; !exists {
+		t.Error("API_KEY was not added")
+	}
+	if _, exists := envVars["API_URL"]; !exists {
+		t.Error("API_URL was not added")
+	}
+
+	// Verify that placeholders were replaced
+	if envVars["DB_PASSWORD"] == "${db_password}" {
+		t.Error("DB_PASSWORD placeholder was not replaced")
+	}
+	if envVars["API_KEY"] == "${api_key}" {
+		t.Error("API_KEY placeholder was not replaced")
+	}
+}
+
+// TestGeneratorForceRegeneratesValues tests that --force regenerates values for keys with placeholders
+func TestGeneratorForceRegeneratesValues(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "genenv-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create .env.example
+	templatePath := filepath.Join(tempDir, ".env.example")
+	templateContent := `SECRET=${secret}
+FIXED_VALUE=fixed
+NO_PLACEHOLDER=value`
+	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
+		t.Fatalf("Failed to write template file: %v", err)
+	}
+
+	// Create existing .env
+	outputPath := filepath.Join(tempDir, ".env")
+	existingContent := `SECRET=old_secret
+FIXED_VALUE=my_fixed_value
+NO_PLACEHOLDER=my_value`
+	if err := os.WriteFile(outputPath, []byte(existingContent), 0644); err != nil {
+		t.Fatalf("Failed to write existing .env file: %v", err)
+	}
+
+	// Run generator with force flag
+	config := Config{
+		TemplatePath: templatePath,
+		OutputPath:   outputPath,
+		Force:        true,
+	}
+	gen := New(config)
+
+	if err := gen.Generate(); err != nil {
+		t.Fatalf("Failed to generate .env file: %v", err)
+	}
+
+	// Read the result
+	result, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("Failed to read generated file: %v", err)
+	}
+	envVars := parseEnvFile(string(result))
+
+	// SECRET should be regenerated (different from old_secret)
+	if envVars["SECRET"] == "old_secret" {
+		t.Error("SECRET was not regenerated with --force flag")
+	}
+	if envVars["SECRET"] == "${secret}" {
+		t.Error("SECRET placeholder was not replaced")
+	}
+
+	// FIXED_VALUE should be preserved (no placeholder in template)
+	if envVars["FIXED_VALUE"] != "my_fixed_value" {
+		t.Errorf("FIXED_VALUE should be preserved, got %s", envVars["FIXED_VALUE"])
+	}
+
+	// NO_PLACEHOLDER should be preserved (no placeholder in template)
+	if envVars["NO_PLACEHOLDER"] != "my_value" {
+		t.Errorf("NO_PLACEHOLDER should be preserved, got %s", envVars["NO_PLACEHOLDER"])
+	}
+}

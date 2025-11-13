@@ -2,11 +2,10 @@ name: CI
 
 on:
   push:
-  pull_request:
 
 jobs:
-  test:
-    name: Test and Format
+  check:
+    name: Format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -16,7 +15,6 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-          check-latest: true
 
       - name: Format check
         run: |
@@ -26,5 +24,17 @@ jobs:
             exit 1
           fi
 
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
       - name: Run tests
-        run: go test -v ./...
+        run: go test -shuffle=on -race -v ./...

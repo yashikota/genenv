@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	Version = "1.0.0"
+	Version = "1.1.0"
 )
 
 func main() {
@@ -47,6 +47,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  genenv .env.example --output .env.production\n")
 		fmt.Fprintf(os.Stderr, "  genenv .env.example --length 32 --charset numeric\n")
 	}
+
+	reorderArgs()
 
 	flag.Parse()
 
@@ -133,4 +135,45 @@ func promptOverwrite(path string) bool {
 	}
 	response = strings.TrimSpace(strings.ToLower(response))
 	return response == "y" || response == "yes"
+}
+
+func reorderArgs() {
+	if len(os.Args) <= 1 {
+		return
+	}
+
+	args := os.Args[1:]
+	var flags []string
+	var positional []string
+
+	// Bool flags that don't take values
+	boolFlags := map[string]bool{
+		"-f": true, "--force": true,
+		"-y": true, "--yes": true,
+		"-v": true, "--version": true,
+		"-h": true, "--help": true,
+	}
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+
+		// Check if it's a flag
+		if strings.HasPrefix(arg, "-") {
+			flags = append(flags, arg)
+
+			// Check if this flag expects a value
+			if !boolFlags[arg] && !strings.Contains(arg, "=") {
+				// Check if there's a next argument and it's not a flag
+				if i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+					i++
+					flags = append(flags, args[i])
+				}
+			}
+		} else {
+			// It's a positional argument
+			positional = append(positional, arg)
+		}
+	}
+
+	os.Args = append([]string{os.Args[0]}, append(flags, positional...)...)
 }
