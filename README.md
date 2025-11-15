@@ -1,5 +1,7 @@
 # genenv
 
+https://github.com/user-attachments/assets/1f53164a-d64c-4591-bc31-b4259c70fad8
+
 A simple CLI tool to generate `.env` files from template files, automatically filling in placeholders with cryptographically secure random values  
 
 *[日本語](README_ja.md)*
