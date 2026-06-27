@@ -630,7 +630,7 @@ func TestVersionOption_ShortForm(t *testing.T) {
 
 	assertExitCode(t, exitCode, 0)
 	assertContains(t, stdout, "genenv version")
-	assertContains(t, stdout, "1.1.0")
+	assertContains(t, stdout, "2.0.0")
 }
 
 func TestVersionOption_LongForm(t *testing.T) {
@@ -641,7 +641,7 @@ func TestVersionOption_LongForm(t *testing.T) {
 
 	assertExitCode(t, exitCode, 0)
 	assertContains(t, stdout, "genenv version")
-	assertContains(t, stdout, "1.1.0")
+	assertContains(t, stdout, "2.0.0")
 }
 
 // TestHelpOption tests the -h/--help flag
