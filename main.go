@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/yashikota/genenv/internal/generator"
+	"github.com/yashikota/genenv/generator"
 )
 
 const (

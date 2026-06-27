@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/yashikota/genenv/internal/generator"
+	"github.com/yashikota/genenv/generator"
 )
 
 // buildBinary builds the genenv binary for testing
