@@ -83,6 +83,34 @@ genenv -c numeric .env.example
 genenv -l 16 -c uppercase .env.example
 ```
 
+## ライブラリとして使用
+
+genenvはGoライブラリとしても使用できます:
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/yashikota/genenv/generator"
+)
+
+func main() {
+	gen := generator.New(generator.Config{
+		TemplatePath: ".env.example",
+		OutputPath:   ".env",
+		ValueLength:  32,
+		Charset:      generator.CharsetAlphanumeric,
+	})
+
+	if err := gen.Generate(); err != nil {
+		fmt.Printf("Error: %v\\n", err)
+	}
+}
+```
+
+
 ### 再生成
 
 デフォルトでは、`.env` ファイルの既存の値は保持されます。既存の値も含めてすべての値を再生成するには、`--force` フラグを使用します  

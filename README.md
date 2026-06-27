@@ -86,6 +86,34 @@ genenv -c numeric .env.example
 genenv -l 16 -c uppercase .env.example
 ```
 
+## Library Usage
+
+You can also use genenv as a Go library:
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/yashikota/genenv/generator"
+)
+
+func main() {
+	gen := generator.New(generator.Config{
+		TemplatePath: ".env.example",
+		OutputPath:   ".env",
+		ValueLength:  32,
+		Charset:      generator.CharsetAlphanumeric,
+	})
+
+	if err := gen.Generate(); err != nil {
+		fmt.Printf("Error: %v\\n", err)
+	}
+}
+```
+
+
 ### Regeneration
 
 By default, existing values in your `.env` file are preserved. To regenerate all values including existing ones, use the `--force` flag.  
